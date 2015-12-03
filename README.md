@@ -1,3 +1,3 @@
 #Antonio-Zelda
 
-Playing with Bluetooth LE with Android Studio
+Playing with Bluetooth LE using Android Studio
