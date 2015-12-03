@@ -23,6 +23,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements BluetoothAdapter.LeScanCallback {
@@ -270,6 +271,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                         pirValue = 10 * pirValue + val;
                     }
                     mPirValues.add(pirValue);
+                    Collections.sort(mPirValues, Collections.reverseOrder());
                     mConnectStatus.setText("Statistics: " + mPirValues.toString());
                     break;
             }
