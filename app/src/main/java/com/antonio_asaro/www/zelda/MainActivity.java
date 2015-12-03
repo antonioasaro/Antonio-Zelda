@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -21,6 +22,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.BarGraphSeries;
+import com.jjoe64.graphview.series.DataPoint;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -81,6 +86,16 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mProgress = new ProgressDialog(this);
         mProgress.setIndeterminate(true);
         mProgress.setCancelable(false);
+
+        GraphView graph = (GraphView) findViewById(R.id.graph);
+        BarGraphSeries<DataPoint> series = new BarGraphSeries<DataPoint>(new DataPoint[] {
+                new DataPoint(0, 1), new DataPoint(1, 5),
+                new DataPoint(2, 3), new DataPoint(3, 2),
+                new DataPoint(4, 6), new DataPoint(5, 4),
+                new DataPoint(6, 1), new DataPoint(7, 2)
+        });
+        series.setColor(Color.rgb(0, 128, 0));
+        graph.addSeries(series);
 
         BluetoothManager manager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
         mBluetoothAdapter = manager.getAdapter();
@@ -272,7 +287,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                     }
                     mPirValues.add(pirValue);
                     Collections.sort(mPirValues, Collections.reverseOrder());
-                    mConnectStatus.setText("Statistics: " + mPirValues.toString());
+                    mConnectStatus.setText("Stats: " + mPirValues.get(0).toString());
                     break;
             }
         }
