@@ -265,7 +265,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                     }
                     int i; int val; Long pirValue;
                     pirValue = Long.valueOf(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
-                    for (i=1; i<16; i++) {
+                    for (i=1; i<18; i++) {
                         val = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, i);
                         pirValue = 10 * pirValue + val;
                     }
