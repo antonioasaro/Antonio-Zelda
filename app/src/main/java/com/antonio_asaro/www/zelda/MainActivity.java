@@ -24,6 +24,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.GridLabelRenderer;
 import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 
@@ -36,7 +37,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private static final String DEVICE_NAME = "ZELDA";
     private static final UUID ZELDA_SERVICE         = UUID.fromString("0000ec00-0000-1000-8000-00805f9b34fb");
     private static final UUID ZELDA_CHARACTERISTIC  = UUID.fromString("0000ec0e-0000-1000-8000-00805f9b34fb");
-    private static final int MAXDEPTH = 4;
+    private static final int MAXDEPTH = 8;
 
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothDevice mDevice;
@@ -44,7 +45,9 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private Button mScan, mConnect;
     private TextView mScanStatus, mConnectStatus;
     private ProgressDialog mProgress;
-    private ArrayList<Long> mPirValues = new ArrayList();
+    private GraphView mGraphView;
+    private ArrayList<Long> mPirDates = new ArrayList();
+    private ArrayList<Integer> mPirDuration = new ArrayList();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,7 +80,8 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             @Override
             public void onClick(View v) {
                 mConnectStatus.setText("Connecting ...");
-                mPirValues.clear();
+                mPirDates.clear();
+                mPirDuration.clear();
                 connectDevice();
             }
         });
@@ -87,15 +91,12 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mProgress.setIndeterminate(true);
         mProgress.setCancelable(false);
 
-        GraphView graph = (GraphView) findViewById(R.id.graph);
-        BarGraphSeries<DataPoint> series = new BarGraphSeries<DataPoint>(new DataPoint[] {
-                new DataPoint(0, 1), new DataPoint(1, 5),
-                new DataPoint(2, 3), new DataPoint(3, 2),
-                new DataPoint(4, 6), new DataPoint(5, 4),
-                new DataPoint(6, 1), new DataPoint(7, 2)
-        });
-        series.setColor(Color.rgb(0, 128, 0));
-        graph.addSeries(series);
+        mGraphView = (GraphView) findViewById(R.id.graph);
+        mGraphView.setTitle("Last 24hrs");
+        GridLabelRenderer gridLabel = mGraphView.getGridLabelRenderer();
+        gridLabel.setHorizontalAxisTitle("Date");
+        gridLabel.setVerticalAxisTitle("Duration");
+
 
         BluetoothManager manager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
         mBluetoothAdapter = manager.getAdapter();
@@ -184,6 +185,18 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mConnectedGatt = device.connectGatt(getApplicationContext(), true, mGattCallback);
     }
 
+    private void drawGraph() {
+        BarGraphSeries<DataPoint> series = new BarGraphSeries<DataPoint>(new DataPoint[]{
+                new DataPoint(0, mPirDuration.get(0)), new DataPoint(1, mPirDuration.get(1)),
+                new DataPoint(2, mPirDuration.get(2)), new DataPoint(3, mPirDuration.get(3)),
+                new DataPoint(4, mPirDuration.get(4)), new DataPoint(5, mPirDuration.get(5)),
+                new DataPoint(6, mPirDuration.get(6)), new DataPoint(7, mPirDuration.get(7))
+        });
+        series.setColor(Color.rgb(0, 128, 0));
+        mGraphView.removeAllSeries();
+        mGraphView.addSeries(series);
+    }
+
     @Override
     public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
         Log.i(TAG, "New LE Device: " + device.getName() + " @ " + rssi);
@@ -224,14 +237,17 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            Log.d(TAG, "OnCharacteristicRead: " + status);
-            mHandler.sendMessage(Message.obtain(null, MSG_CHARACTERISTIC, characteristic));
+            Log.d(TAG, "OnCharacteristicRead: " + status + " " + loopCount);
+            if (loopCount == (MAXDEPTH - 1)) {
+                mHandler.sendMessage(Message.obtain(null, MSG_LAST, characteristic));
+            } else {
+                mHandler.sendMessage(Message.obtain(null, MSG_CHARACTERISTIC, characteristic));
+            }
             if (loopCount < MAXDEPTH - 1) {
                 loopCount = loopCount + 1;
                 gatt.readCharacteristic(characteristic);
             }
         }
-
 
         private String connectionState(int status) {
             switch (status) {
@@ -253,6 +269,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private static final int MSG_DISCONNECT = 101;
     private static final int MSG_PROGRESS = 102;
     private static final int MSG_CHARACTERISTIC = 103;
+    private static final int MSG_LAST = 104;
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage (Message msg) {
@@ -261,10 +278,10 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             Log.d(TAG, "Calling handler with " + msg.toString());
             switch (msg.what) {
                 case MSG_CONNECT:
-                    mConnectStatus.setText("Connected.");
+                    mConnectStatus.setText("Connected");
                     break;
                 case MSG_DISCONNECT:
-                    mConnectStatus.setText("Disconnected.");
+                    mConnectStatus.setText("Disconnected");
                     break;
                 case MSG_PROGRESS:
                     mProgress.setMessage((String) msg.obj);
@@ -273,21 +290,31 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                     }
                     break;
                 case MSG_CHARACTERISTIC:
-                    mProgress.hide();
+                case MSG_LAST:
                     characteristic = (BluetoothGattCharacteristic) msg.obj;
                     if (characteristic.getValue() == null) {
                         Log.w(TAG, "Error obtaining characteristic value");
                         return;
                     }
-                    int i; int val; Long pirValue;
-                    pirValue = Long.valueOf(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
-                    for (i=1; i<18; i++) {
+                    int i; int val; Long pirDate; int pirDuration;
+                    pirDate = Long.valueOf(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
+                    for (i=1; i<18-4; i++) {
                         val = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, i);
-                        pirValue = 10 * pirValue + val;
+                        pirDate = 10 * pirDate + val;
                     }
-                    mPirValues.add(pirValue);
-                    Collections.sort(mPirValues, Collections.reverseOrder());
-                    mConnectStatus.setText("Stats: " + mPirValues.get(0).toString());
+                    pirDuration = Integer.valueOf(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 18-4));
+                    for (i=18-4+1; i<18; i++) {
+                        val = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, i);
+                        pirDuration = 10 * pirDuration + val;
+                    }
+                    mPirDates.add(pirDate);
+                    mPirDuration.add(pirDuration);
+                    if (msg.what == MSG_LAST) {
+                        mProgress.hide();
+                        Collections.sort(mPirDates, Collections.reverseOrder());
+                        drawGraph();
+                        mConnectStatus.setText("Stats: " + mPirDates.get(0).toString() + " " + mPirDuration.get(0).toString());
+                    }
                     break;
             }
         }
