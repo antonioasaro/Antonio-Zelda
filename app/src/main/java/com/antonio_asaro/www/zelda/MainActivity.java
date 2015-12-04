@@ -10,6 +10,7 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -23,6 +24,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GridLabelRenderer;
 import com.jjoe64.graphview.series.BarGraphSeries;
@@ -35,8 +39,8 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity implements BluetoothAdapter.LeScanCallback {
     private static final String TAG = "zelda";
     private static final String DEVICE_NAME = "ZELDA";
-    private static final UUID ZELDA_SERVICE         = UUID.fromString("0000ec00-0000-1000-8000-00805f9b34fb");
-    private static final UUID ZELDA_CHARACTERISTIC  = UUID.fromString("0000ec0e-0000-1000-8000-00805f9b34fb");
+    private static final UUID ZELDA_SERVICE = UUID.fromString("0000ec00-0000-1000-8000-00805f9b34fb");
+    private static final UUID ZELDA_CHARACTERISTIC = UUID.fromString("0000ec0e-0000-1000-8000-00805f9b34fb");
     private static final int MAXDEPTH = 8;
 
     private BluetoothAdapter mBluetoothAdapter;
@@ -46,8 +50,12 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private TextView mScanStatus, mConnectStatus;
     private ProgressDialog mProgress;
     private GraphView mGraphView;
-    private ArrayList<Long> mPirDates = new ArrayList();
-    private ArrayList<Integer> mPirDuration = new ArrayList();
+    private ArrayList<String> mPirValues = new ArrayList();
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,8 +88,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             @Override
             public void onClick(View v) {
                 mConnectStatus.setText("Connecting ...");
-                mPirDates.clear();
-                mPirDuration.clear();
+                mPirValues.clear();
                 connectDevice();
             }
         });
@@ -94,12 +101,15 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mGraphView = (GraphView) findViewById(R.id.graph);
         mGraphView.setTitle("Last 24hrs");
         GridLabelRenderer gridLabel = mGraphView.getGridLabelRenderer();
-        gridLabel.setHorizontalAxisTitle("Date");
+        gridLabel.setHorizontalAxisTitle("Time");
         gridLabel.setVerticalAxisTitle("Duration");
 
 
         BluetoothManager manager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
         mBluetoothAdapter = manager.getAdapter();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     @Override
@@ -125,11 +135,27 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     @Override
     protected void onStop() {
         super.onStop();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://com.antonio_asaro.www.zelda/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
         //Disconnect from any active tag connection
         if (mConnectedGatt != null) {
             mConnectedGatt.disconnect();
             mConnectedGatt = null;
         }
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.disconnect();
     }
 
     @Override
@@ -186,14 +212,12 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     }
 
     private void drawGraph() {
-        BarGraphSeries<DataPoint> series = new BarGraphSeries<DataPoint>(new DataPoint[]{
-                new DataPoint(0, mPirDuration.get(0)), new DataPoint(1, mPirDuration.get(1)),
-                new DataPoint(2, mPirDuration.get(2)), new DataPoint(3, mPirDuration.get(3)),
-                new DataPoint(4, mPirDuration.get(4)), new DataPoint(5, mPirDuration.get(5)),
-                new DataPoint(6, mPirDuration.get(6)), new DataPoint(7, mPirDuration.get(7))
-        });
-        series.setColor(Color.rgb(0, 128, 0));
         mGraphView.removeAllSeries();
+        DataPoint[] dataPoints = new DataPoint[4];
+        dataPoints[0] = new DataPoint(0, 3); dataPoints[1] = new DataPoint(1, 4);
+        dataPoints[2] = new DataPoint(2, 2); dataPoints[3] = new DataPoint(3, 5);
+        BarGraphSeries<DataPoint> series = new BarGraphSeries<DataPoint>(dataPoints);
+        series.setColor(Color.rgb(0, 128, 0));
         mGraphView.addSeries(series);
     }
 
@@ -272,7 +296,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private static final int MSG_LAST = 104;
     private Handler mHandler = new Handler() {
         @Override
-        public void handleMessage (Message msg) {
+        public void handleMessage(Message msg) {
             BluetoothGattCharacteristic characteristic;
 
             Log.d(TAG, "Calling handler with " + msg.toString());
@@ -296,28 +320,39 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                         Log.w(TAG, "Error obtaining characteristic value");
                         return;
                     }
-                    int i; int val; Long pirDate; int pirDuration;
-                    pirDate = Long.valueOf(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
-                    for (i=1; i<18-4; i++) {
-                        val = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, i);
-                        pirDate = 10 * pirDate + val;
+                    String pirVlaue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0).toString();
+                    for (int i = 1; i < 18; i++) {
+                        pirVlaue = pirVlaue + characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, i).toString();
                     }
-                    pirDuration = Integer.valueOf(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 18-4));
-                    for (i=18-4+1; i<18; i++) {
-                        val = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, i);
-                        pirDuration = 10 * pirDuration + val;
-                    }
-                    mPirDates.add(pirDate);
-                    mPirDuration.add(pirDuration);
+                    mPirValues.add(pirVlaue);
                     if (msg.what == MSG_LAST) {
                         mProgress.hide();
-                        Collections.sort(mPirDates, Collections.reverseOrder());
+                        Collections.sort(mPirValues, Collections.reverseOrder());
                         drawGraph();
-                        mConnectStatus.setText("Stats: " + mPirDates.get(0).toString() + " " + mPirDuration.get(0).toString());
+                        mConnectStatus.setText("Stats: " + mPirValues.get(0).toString().substring(0, 4));
                     }
                     break;
             }
         }
     };
 
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://com.antonio_asaro.www.zelda/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
+    }
 };
