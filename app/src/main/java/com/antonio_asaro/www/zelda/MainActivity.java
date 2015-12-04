@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -32,8 +33,11 @@ import com.jjoe64.graphview.GridLabelRenderer;
 import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements BluetoothAdapter.LeScanCallback {
@@ -68,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                Snackbar.make(view, "Alert the Mrs.", Snackbar.LENGTH_LONG).setAction("Action", null).show();
             }
         });
 
@@ -99,10 +103,10 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mProgress.setCancelable(false);
 
         mGraphView = (GraphView) findViewById(R.id.graph);
-        mGraphView.setTitle("Last 24hrs");
+//        mGraphView.setTitle("Last 36hrs");
         GridLabelRenderer gridLabel = mGraphView.getGridLabelRenderer();
-        gridLabel.setHorizontalAxisTitle("Time");
-        gridLabel.setVerticalAxisTitle("Duration");
+        gridLabel.setHorizontalAxisTitle("Time (sec ago");
+        gridLabel.setVerticalAxisTitle("Duration (sec)");
 
 
         BluetoothManager manager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
@@ -213,12 +217,34 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
 
     private void drawGraph() {
         mGraphView.removeAllSeries();
-        DataPoint[] dataPoints = new DataPoint[4];
-        dataPoints[0] = new DataPoint(0, 3); dataPoints[1] = new DataPoint(1, 4);
-        dataPoints[2] = new DataPoint(2, 2); dataPoints[3] = new DataPoint(3, 5);
-        BarGraphSeries<DataPoint> series = new BarGraphSeries<DataPoint>(dataPoints);
-        series.setColor(Color.rgb(0, 128, 0));
-        mGraphView.addSeries(series);
+        DataPoint[] hourPoints = new DataPoint[10];
+        DataPoint[] dataPoints = new DataPoint[MAXDEPTH];
+        for (int i = 0; i < 10; i++){
+            hourPoints[i] = new DataPoint(i * 60, 0);
+        }
+
+        Date pirDate = null;
+        Date now = new Date();
+        DateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmss");
+        for (int i = 0; i < MAXDEPTH; i++) {
+            try {
+                pirDate = dateFormat.parse(mPirValues.get(i).toString().substring(0, 14));
+            } catch (Exception e) {
+                Log.d(TAG, "Date conversion failed");
+                return;
+            }
+            int diff = (int) Math.abs((now.getTime() - pirDate.getTime()) / 1000);
+            int durr = Integer.parseInt(mPirValues.get(i).toString().substring(14, 18));
+            Log.d(TAG, "Data point is: " + "(" + diff + ", " + durr + ")");
+            dataPoints[i] = new DataPoint(diff, durr);
+        }
+
+        BarGraphSeries<DataPoint> hourSeries = new BarGraphSeries<DataPoint>(hourPoints);
+        BarGraphSeries<DataPoint> dataSeries = new BarGraphSeries<DataPoint>(dataPoints);
+        hourSeries.setColor(Color.rgb(0, 128, 0));
+        dataSeries.setColor(Color.rgb(0, 128, 0));
+//        mGraphView.addSeries(hourSeries);
+        mGraphView.addSeries(dataSeries);
     }
 
     @Override
@@ -329,7 +355,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                         mProgress.hide();
                         Collections.sort(mPirValues, Collections.reverseOrder());
                         drawGraph();
-                        mConnectStatus.setText("Stats: " + mPirValues.get(0).toString().substring(0, 4));
+                        mConnectStatus.setText("Successful xfer of stats");
                     }
                     break;
             }
