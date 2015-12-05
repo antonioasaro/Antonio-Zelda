@@ -119,6 +119,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         GridLabelRenderer gridLabel = mGraphView.getGridLabelRenderer();
         gridLabel.setHorizontalAxisTitle("    Time (24hr)");
         gridLabel.setVerticalAxisTitle("Duration (sec)");
+        gridLabel.setLabelsSpace(0);
         gridLabel.setLabelFormatter(new DefaultLabelFormatter() {
             @Override
             public String formatLabel(double value, boolean isValueX) {
@@ -129,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 int hour = calendar.get(Calendar.HOUR_OF_DAY);
                 int minute = calendar.get(Calendar.MINUTE);
                 String adjMin = ":" + ((minute < 10) ? ("0" + Integer.toString(minute)) : Integer.toString(minute));
-                Log.d(TAG, "Label new: " + value + ", " + adjDate.toString());
+//                Log.d(TAG, "Label new: " + value + ", " + adjDate.toString());
                 if (isValueX) {
                     return super.formatLabel(hour, isValueX) + adjMin;
                 } else {
@@ -207,6 +208,8 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
         return super.onOptionsItemSelected(item);
