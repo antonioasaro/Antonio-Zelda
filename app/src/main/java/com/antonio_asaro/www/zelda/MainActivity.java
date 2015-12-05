@@ -46,6 +46,10 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private static final UUID ZELDA_SERVICE = UUID.fromString("0000ec00-0000-1000-8000-00805f9b34fb");
     private static final UUID ZELDA_CHARACTERISTIC = UUID.fromString("0000ec0e-0000-1000-8000-00805f9b34fb");
     private static final int MAXDEPTH = 8;
+    private static final int MINUTES = 5;
+    private static final int INTERVALS = 24 * 60 / MINUTES;
+    private static final int VIEWSCALE = 4;
+
 
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothDevice mDevice;
@@ -103,13 +107,13 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mProgress.setCancelable(false);
 
         mGraphView = (GraphView) findViewById(R.id.graph);
-//        mGraphView.setTitle("Last 36hrs");
+        mGraphView.setTitle("  Last 24 hours");
         mGraphView.getViewport().setScrollable(true);
         mGraphView.getViewport().setScalable(true);
         mGraphView.getViewport().setMinX(0);
-        mGraphView.getViewport().setMaxX(500);
+        mGraphView.getViewport().setMaxX(INTERVALS / VIEWSCALE);
         GridLabelRenderer gridLabel = mGraphView.getGridLabelRenderer();
-        gridLabel.setHorizontalAxisTitle("Time (sec ago)");
+        gridLabel.setHorizontalAxisTitle("  Time (sec ago)");
         gridLabel.setVerticalAxisTitle("Duration (sec)");
 
 
@@ -220,34 +224,34 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     }
 
     private void drawGraph() {
-        mGraphView.removeAllSeries();
-        DataPoint[] hourPoints = new DataPoint[10];
-        DataPoint[] dataPoints = new DataPoint[MAXDEPTH];
-        for (int i = 0; i < 10; i++){
-            hourPoints[i] = new DataPoint(i * 60, 0);
+        int i, delta, duration;
+        Date pirDate = null; Date now = new Date();
+        DateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmss");
+
+        DataPoint[] dataPoints = new DataPoint[INTERVALS];
+        for (i = 0; i < INTERVALS; i++) {
+            dataPoints[i] = new DataPoint(i, 0);
         }
 
-        Date pirDate = null;
-        Date now = new Date();
-        DateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmss");
-        for (int i = 0; i < MAXDEPTH; i++) {
+        for (i = 0; i < MAXDEPTH; i++) {
             try {
                 pirDate = dateFormat.parse(mPirValues.get(i).toString().substring(0, 14));
             } catch (Exception e) {
                 Log.d(TAG, "Date conversion failed");
                 return;
             }
-            int diff = (int) Math.abs((now.getTime() - pirDate.getTime()) / 1000);
-            int durr = Integer.parseInt(mPirValues.get(i).toString().substring(14, 18));
-            Log.d(TAG, "Data point is: " + "(" + diff + ", " + durr + ")");
-            dataPoints[i] = new DataPoint(diff, durr);
+            int predelta = (int) Math.abs((now.getTime() - pirDate.getTime()) / 1000);
+            delta = (int) Math.abs((now.getTime() - pirDate.getTime()) / 1000 / (60 * MINUTES));
+            if (delta < INTERVALS) {
+                duration = Integer.parseInt(mPirValues.get(i).toString().substring(14, 18));
+                dataPoints[delta] = new DataPoint(delta, duration + dataPoints[delta].getY());
+                Log.d(TAG, "Data point is: " + "(" + predelta + ", " + delta + " " + ", " + duration + ")");
+            }
         }
 
-        BarGraphSeries<DataPoint> hourSeries = new BarGraphSeries<DataPoint>(hourPoints);
         BarGraphSeries<DataPoint> dataSeries = new BarGraphSeries<DataPoint>(dataPoints);
-        hourSeries.setColor(Color.rgb(0, 128, 0));
         dataSeries.setColor(Color.rgb(0, 128, 0));
-//        mGraphView.addSeries(hourSeries);
+        mGraphView.removeAllSeries();
         mGraphView.addSeries(dataSeries);
     }
 
