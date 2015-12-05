@@ -28,6 +28,7 @@ import android.widget.TextView;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.jjoe64.graphview.DefaultLabelFormatter;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GridLabelRenderer;
 import com.jjoe64.graphview.series.BarGraphSeries;
@@ -36,8 +37,10 @@ import com.jjoe64.graphview.series.DataPoint;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements BluetoothAdapter.LeScanCallback {
@@ -48,13 +51,14 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private static final int MAXDEPTH = 8;
     private static final int MINUTES = 5;
     private static final int INTERVALS = 24 * 60 / MINUTES;
-    private static final int VIEWSCALE = 4;
+    private static final int VIEWSCALE = 32;
 
-
+    private Date mNow = new Date();
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothDevice mDevice;
     private BluetoothGatt mConnectedGatt;
-    private Button mScan, mConnect;
+    private Button mScan;
+    private Button mConnect;
     private TextView mScanStatus, mConnectStatus;
     private ProgressDialog mProgress;
     private GraphView mGraphView;
@@ -107,15 +111,32 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mProgress.setCancelable(false);
 
         mGraphView = (GraphView) findViewById(R.id.graph);
-        mGraphView.setTitle("  Last 24 hours");
+        mGraphView.setTitle("    Last day's deposits -->");
         mGraphView.getViewport().setScrollable(true);
         mGraphView.getViewport().setScalable(true);
         mGraphView.getViewport().setMinX(0);
         mGraphView.getViewport().setMaxX(INTERVALS / VIEWSCALE);
         GridLabelRenderer gridLabel = mGraphView.getGridLabelRenderer();
-        gridLabel.setHorizontalAxisTitle("  Time (sec ago)");
+        gridLabel.setHorizontalAxisTitle("    Time (24hr)");
         gridLabel.setVerticalAxisTitle("Duration (sec)");
-
+        gridLabel.setLabelFormatter(new DefaultLabelFormatter() {
+            @Override
+            public String formatLabel(double value, boolean isValueX) {
+                long newTime = mNow.getTime() - (long) ((value * MINUTES * 60) * 1000);
+                Date adjDate = new Date(newTime);
+                Calendar calendar = GregorianCalendar.getInstance();
+                calendar.setTime(adjDate);
+                int hour = calendar.get(Calendar.HOUR_OF_DAY);
+                int minute = calendar.get(Calendar.MINUTE);
+                String adjMin = ":" + ((minute < 10) ? ("0" + Integer.toString(minute)) : Integer.toString(minute));
+                Log.d(TAG, "Label new: " + value + ", " + adjDate.toString());
+                if (isValueX) {
+                    return super.formatLabel(hour, isValueX) + adjMin;
+                } else {
+                    return super.formatLabel(value, isValueX);
+                }
+            }
+        });
 
         BluetoothManager manager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
         mBluetoothAdapter = manager.getAdapter();
@@ -225,14 +246,15 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
 
     private void drawGraph() {
         int i, delta, duration;
-        Date pirDate = null; Date now = new Date();
+        Date pirDate = null;
         DateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmss");
-
         DataPoint[] dataPoints = new DataPoint[INTERVALS];
+
         for (i = 0; i < INTERVALS; i++) {
             dataPoints[i] = new DataPoint(i, 0);
         }
 
+        mNow = new Date();
         for (i = 0; i < MAXDEPTH; i++) {
             try {
                 pirDate = dateFormat.parse(mPirValues.get(i).toString().substring(0, 14));
@@ -240,12 +262,11 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 Log.d(TAG, "Date conversion failed");
                 return;
             }
-            int predelta = (int) Math.abs((now.getTime() - pirDate.getTime()) / 1000);
-            delta = (int) Math.abs((now.getTime() - pirDate.getTime()) / 1000 / (60 * MINUTES));
+            delta = (int) Math.abs((mNow.getTime() - pirDate.getTime()) / 1000 / (60 * MINUTES));
             if (delta < INTERVALS) {
                 duration = Integer.parseInt(mPirValues.get(i).toString().substring(14, 18));
                 dataPoints[delta] = new DataPoint(delta, duration + dataPoints[delta].getY());
-                Log.d(TAG, "Data point is: " + "(" + predelta + ", " + delta + " " + ", " + duration + ")");
+                Log.d(TAG, "Data point is: " + "(" + delta + " " + ", " + duration + ")");
             }
         }
 
