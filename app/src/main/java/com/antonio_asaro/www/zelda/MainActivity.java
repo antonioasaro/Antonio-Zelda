@@ -89,8 +89,20 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 Intent intent = new Intent(Intent.ACTION_SENDTO);
                 intent.setData(Uri.parse("mailto:")); // only email apps should handle this
                 intent.putExtra(Intent.EXTRA_EMAIL, addresses);
-                intent.putExtra(Intent.EXTRA_SUBJECT, "Project Zelda Poops - stats from last 24hrs");
-                intent.putExtra(Intent.EXTRA_TEXT, "Body");
+                intent.putExtra(Intent.EXTRA_SUBJECT, "Project Zelda Poops");
+
+                String body = "Last deposits ...\n"; Date pirDate;
+                DateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmss");
+                for (int i = 0; i < MAXDEPTH; i++) {
+                    try {
+                        pirDate = dateFormat.parse(mPirValues.get(i).toString().substring(0, 14));
+                    } catch (Exception e) {
+                        Log.d(TAG, "Date conversion failed");
+                        return;
+                    }
+                    body = body + "\n" + pirDate + ((i == (MAXDEPTH-1)) ? "\n" : "");
+                }
+                intent.putExtra(Intent.EXTRA_TEXT, body);
                 if (intent.resolveActivity(getPackageManager()) != null) {
                     startActivity(intent);
                 }
