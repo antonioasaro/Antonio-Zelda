@@ -104,8 +104,12 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
 
         mGraphView = (GraphView) findViewById(R.id.graph);
 //        mGraphView.setTitle("Last 36hrs");
+        mGraphView.getViewport().setScrollable(true);
+        mGraphView.getViewport().setScalable(true);
+        mGraphView.getViewport().setMinX(0);
+        mGraphView.getViewport().setMaxX(500);
         GridLabelRenderer gridLabel = mGraphView.getGridLabelRenderer();
-        gridLabel.setHorizontalAxisTitle("Time (sec ago");
+        gridLabel.setHorizontalAxisTitle("Time (sec ago)");
         gridLabel.setVerticalAxisTitle("Duration (sec)");
 
 

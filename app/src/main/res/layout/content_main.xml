@@ -9,24 +9,13 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:showIn="@layout/activity_main" tools:context=".MainActivity">
 
-    <TextView android:text="Project Zelda Poops" android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@android:color/holo_green_dark"
-        android:textSize="32sp"
-        android:textAlignment="center"
-        android:id="@+id/textView"
-        android:textStyle="bold"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:paddingTop="10dp" />
-
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Scan"
         android:id="@+id/button"
-        android:layout_marginTop="29dp"
-        android:layout_below="@+id/textView"
+        android:layout_marginTop="40dp"
+        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true" />
 
     <Button
@@ -34,9 +23,9 @@
         android:layout_height="wrap_content"
         android:text="Connect and Read"
         android:id="@+id/button2"
-        android:layout_marginTop="19dp"
         android:layout_below="@+id/textView3"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -61,9 +50,10 @@
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:id="@+id/graph"
-        android:layout_marginTop="44dp"
+        android:layout_marginTop="69dp"
         android:layout_marginRight="10dp"
         android:layout_below="@+id/textView2"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true" />
 
 </RelativeLayout>
