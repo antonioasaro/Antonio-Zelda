@@ -94,13 +94,14 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 String body = "Last deposits ...\n"; Date pirDate;
                 DateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmss");
                 for (int i = 0; i < MAXDEPTH; i++) {
+                    String pirDuration = mPirValues.get(i).toString().substring(14, 18);
                     try {
                         pirDate = dateFormat.parse(mPirValues.get(i).toString().substring(0, 14));
                     } catch (Exception e) {
                         Log.d(TAG, "Date conversion failed");
                         return;
                     }
-                    body = body + "\n" + pirDate + ((i == (MAXDEPTH-1)) ? "\n" : "");
+                    body = body + "\n" + pirDate + " - " + Integer.parseInt(pirDuration) + " secs" + ((i == (MAXDEPTH-1)) ? "\n" : "");
                 }
                 intent.putExtra(Intent.EXTRA_TEXT, body);
                 if (intent.resolveActivity(getPackageManager()) != null) {
