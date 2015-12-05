@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private static final String DEVICE_NAME = "ZELDA";
     private static final UUID ZELDA_SERVICE = UUID.fromString("0000ec00-0000-1000-8000-00805f9b34fb");
     private static final UUID ZELDA_CHARACTERISTIC = UUID.fromString("0000ec0e-0000-1000-8000-00805f9b34fb");
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
     private static final int MAXDEPTH = 8;
     private static final int MINUTES = 5;
     private static final int INTERVALS = 24 * 60 / MINUTES;
@@ -92,18 +93,19 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 intent.putExtra(Intent.EXTRA_SUBJECT, "Project Zelda Poops");
 
                 String body = "Last deposits ...\n"; Date pirDate;
-                DateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmss");
                 for (int i = 0; i < MAXDEPTH; i++) {
                     String pirDuration = mPirValues.get(i).toString().substring(14, 18);
-                    try {
-                        pirDate = dateFormat.parse(mPirValues.get(i).toString().substring(0, 14));
-                    } catch (Exception e) {
-                        Log.d(TAG, "Date conversion failed");
-                        return;
+                    if (pirDuration.equals("0000") == false) {
+                        try {
+                            pirDate = DATE_FORMAT.parse(mPirValues.get(i).toString().substring(0, 14));
+                        } catch (Exception e) {
+                            Log.d(TAG, "Date conversion failed");
+                            return;
+                        }
+                        body = body + "\n" + pirDate + " - " + Integer.parseInt(pirDuration) + " secs";
                     }
-                    body = body + "\n" + pirDate + " - " + Integer.parseInt(pirDuration) + " secs" + ((i == (MAXDEPTH-1)) ? "\n" : "");
                 }
-                intent.putExtra(Intent.EXTRA_TEXT, body);
+                intent.putExtra(Intent.EXTRA_TEXT, body + "\n");
                 if (intent.resolveActivity(getPackageManager()) != null) {
                     startActivity(intent);
                 }
@@ -276,7 +278,6 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private void drawGraph() {
         int i, delta, duration;
         Date pirDate = null;
-        DateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmss");
         DataPoint[] dataPoints = new DataPoint[INTERVALS];
 
         for (i = 0; i < INTERVALS; i++) {
@@ -286,7 +287,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mNow = new Date();
         for (i = 0; i < MAXDEPTH; i++) {
             try {
-                pirDate = dateFormat.parse(mPirValues.get(i).toString().substring(0, 14));
+                pirDate = DATE_FORMAT.parse(mPirValues.get(i).toString().substring(0, 14));
             } catch (Exception e) {
                 Log.d(TAG, "Date conversion failed");
                 return;
