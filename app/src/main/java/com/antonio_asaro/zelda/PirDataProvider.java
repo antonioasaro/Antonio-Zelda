@@ -2,17 +2,30 @@ package com.antonio_asaro.zelda;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 public class PirDataProvider extends ContentProvider {
-    static final String AUTHORITY = "com.antonio_asaro.www.zelda.pirdataprovider";
+    private static final String TAG = "pirdata";
+    static final String AUTHORITY = "com.antonio_asaro.zelda.provider";
     static final String URL = "content://" + AUTHORITY + "/pirdata";
     static final Uri CONTENT_URI = Uri.parse(URL);
 
     static final String _ID = "_id";
-    static final String DURATION = "duration";
+    static final String DAY_OF = "day_of";
+    static final String TIME_OF = "time_of";
+    static final int PIRDATA = 100;
+    static final int PIRDATA_WITH_DAY_OF = 101;
+    static final UriMatcher sUriMatcher;
+    static {
+        sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+        sUriMatcher.addURI(AUTHORITY, "pirdata", PIRDATA);
+        sUriMatcher.addURI(AUTHORITY, "pirdata/*", PIRDATA_WITH_DAY_OF);
+    }
+
 
     @Override
     public boolean onCreate() {
@@ -34,6 +47,7 @@ public class PirDataProvider extends ContentProvider {
     @Nullable
     @Override
     public Uri insert(Uri uri, ContentValues values) {
+        Log.d(TAG, "Calling insert of provider");
         return null;
     }
 
@@ -46,4 +60,5 @@ public class PirDataProvider extends ContentProvider {
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         return 0;
     }
+
 }

@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -127,6 +128,8 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                ContentValues values = new ContentValues();
+                Uri uri = getContentResolver().insert(PirDataProvider.CONTENT_URI, values);
                 mConnectStatus.setText("Connecting ...");
                 mPirValues.clear();
                 connectDevice();
