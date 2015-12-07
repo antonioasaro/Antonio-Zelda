@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.antonio_asaro.www.zelda" >
+    package="com.antonio_asaro.zelda" >
 
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
 
@@ -25,12 +25,12 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.antonio_asaro.www.zelda.SettingsActivity"
+            android:name="com.antonio_asaro.zelda.SettingsActivity"
             android:label="Settings"
-            android:parentActivityName="com.antonio_asaro.www.zelda.MainActivity" >
+            android:parentActivityName="com.antonio_asaro.zelda.MainActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.antonio_asaro.www.zelda.MainActivity" />
+                android:value="com.antonio_asaro.zelda.MainActivity" />
         </activity>
         <!-- ATTENTION: This was auto-generated to add Google Play services to your project for
              App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
