@@ -12,8 +12,7 @@ public class PirDataProvider extends ContentProvider {
     static final Uri CONTENT_URI = Uri.parse(URL);
 
     static final String _ID = "_id";
-    static final String NAME = "name";
-    static final String GRADE = "grade";
+    static final String DURATION = "duration";
 
     @Override
     public boolean onCreate() {
