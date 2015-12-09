@@ -1,4 +1,4 @@
-package com.antonio_asaro.www.zelda;
+package com.antonio_asaro.zelda;
 
 import org.junit.Test;
 
