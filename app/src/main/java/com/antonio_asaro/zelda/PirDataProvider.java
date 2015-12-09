@@ -17,15 +17,17 @@ public class PirDataProvider extends ContentProvider {
     static final String _ID = "_id";
     static final String DAY_OF = "day_of";
     static final String TIME_OF = "time_of";
+    static final String DURATION_OF = "duration_of";
     static final int PIRDATA = 100;
-    static final int PIRDATA_WITH_DAY_OF = 101;
+    static final int PIRDATA_ID = 101;
     static final UriMatcher sUriMatcher;
     static {
         sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         sUriMatcher.addURI(AUTHORITY, "pirdata", PIRDATA);
-        sUriMatcher.addURI(AUTHORITY, "pirdata/*", PIRDATA_WITH_DAY_OF);
+        sUriMatcher.addURI(AUTHORITY, "pirdata/#", PIRDATA_ID);
     }
 
+    private PirDataBase pirDataBase = null;
 
     @Override
     public boolean onCreate() {
@@ -41,7 +43,14 @@ public class PirDataProvider extends ContentProvider {
     @Nullable
     @Override
     public String getType(Uri uri) {
-        return null;
+        switch (sUriMatcher.match(uri)) {
+            case PIRDATA:
+                return "vnd.android.cursor.dir/vnd.com.antonio_asaro.zelda.provider.pirdata";
+            case PIRDATA_ID:
+                return "vnd.android.cursor.item/vnd.com.antonio_asaro.zelda.provider.pirdata";
+
+        }
+        return "";
     }
 
     @Nullable
@@ -60,5 +69,5 @@ public class PirDataProvider extends ContentProvider {
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         return 0;
     }
-
 }
+

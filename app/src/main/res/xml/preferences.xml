@@ -11,9 +11,14 @@
         android:title="Email Address">
     </EditTextPreference>
     <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="viewType"
+        android:summary="Selects GraphView vs. ListView"
+        android:title="ViewType Selection" />
+    <CheckBoxPreference
         android:defaultValue="false"
         android:key="autoNotifications"
-        android:summary="This option, if selected, will auto-update the statistics when connected."
+        android:summary="This option, if selected, will auto-update the statistics, when connected"
         android:title="Automatic Notifications" />
 
 </PreferenceScreen>

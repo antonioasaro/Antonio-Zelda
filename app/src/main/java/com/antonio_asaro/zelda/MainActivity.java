@@ -25,7 +25,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.android.gms.appindexing.Action;
@@ -66,7 +68,11 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private TextView mScanStatus, mConnectStatus;
     private ProgressDialog mProgress;
     private GraphView mGraphView;
+    private ListView mListView;
     private ArrayList<String> mPirValues = new ArrayList();
+    private SharedPreferences mPreferences;
+    private boolean mViewType;
+
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -80,14 +86,14 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Snackbar.make(view, "Alerting the Mrs.", Snackbar.LENGTH_LONG).setAction("Action", null).show();
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
                 String addresses[] = new String[1];
-                addresses[0] = prefs.getString("emailAddress", "Default email address");
+                addresses[0] = mPreferences.getString("emailAddress", "Default email address");
                 Intent intent = new Intent(Intent.ACTION_SENDTO);
                 intent.setData(Uri.parse("mailto:")); // only email apps should handle this
                 intent.putExtra(Intent.EXTRA_EMAIL, addresses);
@@ -141,6 +147,12 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mProgress.setIndeterminate(true);
         mProgress.setCancelable(false);
 
+        mListView = (ListView) findViewById(R.id.listView);
+        ArrayList<String> pirDataString = new ArrayList<>();
+        for (int i = 0; i < 32; i++) { pirDataString.add("something"); }
+        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_expandable_list_item_1, android.R.id.text1, pirDataString);
+        mListView.setAdapter(adapter);
+
         mGraphView = (GraphView) findViewById(R.id.graph);
         mGraphView.setTitle("    Last day's deposits -->");
         mGraphView.getViewport().setScrollable(true);
@@ -180,6 +192,15 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     @Override
     protected void onResume() {
         super.onResume();
+
+        mViewType = mPreferences.getBoolean("viewType", true);
+        if (mViewType) {
+            mGraphView.setVisibility(View.VISIBLE);
+            mListView.setVisibility(View.GONE);
+        } else {
+            mGraphView.setVisibility(View.GONE);
+            mListView.setVisibility(View.VISIBLE);
+        };
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivity(enableBtIntent);
@@ -210,7 +231,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 // Otherwise, set the URL to null.
                 Uri.parse("http://host/path"),
                 // TODO: Make sure this auto-generated app deep link URI is correct.
-                Uri.parse("android-app://com.antonio_asaro.www.zelda/http/host/path")
+                Uri.parse("android-app://com.antonio_asaro.zelda/http/host/path")
         );
         AppIndex.AppIndexApi.end(client, viewAction);
         //Disconnect from any active tag connection
@@ -439,7 +460,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 // Otherwise, set the URL to null.
                 Uri.parse("http://host/path"),
                 // TODO: Make sure this auto-generated app deep link URI is correct.
-                Uri.parse("android-app://com.antonio_asaro.www.zelda/http/host/path")
+                Uri.parse("android-app://com.antonio_asaro.zelda/http/host/path")
         );
         AppIndex.AppIndexApi.start(client, viewAction);
     }
