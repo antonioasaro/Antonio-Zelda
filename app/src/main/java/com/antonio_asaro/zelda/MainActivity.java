@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private static final UUID ZELDA_SERVICE = UUID.fromString("0000ec00-0000-1000-8000-00805f9b34fb");
     private static final UUID ZELDA_CHARACTERISTIC = UUID.fromString("0000ec0e-0000-1000-8000-00805f9b34fb");
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
-    private static final int MAXDEPTH = 8;
+    private static final int MAXDEPTH = 16;
     private static final int MINUTES = 5;
     private static final int INTERVALS = 24 * 60 / MINUTES;
     private static final int VIEWSCALE = 32;
@@ -70,8 +70,10 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private GraphView mGraphView;
     private ListView mListView;
     private ArrayList<String> mPirValues = new ArrayList();
+    private ArrayList<String> mPirList = new ArrayList<>();
     private SharedPreferences mPreferences;
     private boolean mViewType;
+    private ArrayAdapter mAdapter;
 
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -99,17 +101,18 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 intent.putExtra(Intent.EXTRA_EMAIL, addresses);
                 intent.putExtra(Intent.EXTRA_SUBJECT, "Project Zelda Poops");
 
-                String body = "Last deposits ...\n"; Date pirDate;
+                String body = "Last deposits ...\n"; Date date;
+                SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss");
                 for (int i = 0; i < MAXDEPTH; i++) {
                     String pirDuration = mPirValues.get(i).toString().substring(14, 18);
                     if (pirDuration.equals("0000") == false) {
                         try {
-                            pirDate = DATE_FORMAT.parse(mPirValues.get(i).toString().substring(0, 14));
+                            date = DATE_FORMAT.parse(mPirValues.get(i).toString().substring(0, 14));
                         } catch (Exception e) {
                             Log.d(TAG, "Date conversion failed");
                             return;
                         }
-                        body = body + "\n" + pirDate + " - " + Integer.parseInt(pirDuration) + " secs";
+                        body = body + "\n" + sdf.format(date) + " - " + Integer.parseInt(pirDuration) + " secs";
                     }
                 }
                 intent.putExtra(Intent.EXTRA_TEXT, body + "\n");
@@ -148,10 +151,8 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mProgress.setCancelable(false);
 
         mListView = (ListView) findViewById(R.id.listView);
-        ArrayList<String> pirDataString = new ArrayList<>();
-        for (int i = 0; i < 32; i++) { pirDataString.add("something"); }
-        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_expandable_list_item_1, android.R.id.text1, pirDataString);
-        mListView.setAdapter(adapter);
+        mAdapter = new ArrayAdapter(this, android.R.layout.simple_expandable_list_item_1, android.R.id.text1, mPirList);
+        mListView.setAdapter(mAdapter);
 
         mGraphView = (GraphView) findViewById(R.id.graph);
         mGraphView.setTitle("    Last day's deposits -->");
@@ -299,6 +300,24 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mConnectedGatt = device.connectGatt(getApplicationContext(), true, mGattCallback);
     }
 
+    private void createList() {
+        mPirList.clear();
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss");
+        for (int i = 0; i < MAXDEPTH; i++) {
+            String pirDuration = mPirValues.get(i).toString().substring(14, 18);
+            if (pirDuration.equals("0000") == false) {
+                try {
+                    Date date = DATE_FORMAT.parse(mPirValues.get(i).toString().substring(0, 14));
+                    mPirList.add(sdf.format(date) + " - " + Integer.parseInt(pirDuration) + " secs");
+                } catch (Exception e) {
+                    Log.d(TAG, "Date conversion failed");
+                    return;
+                }
+            }
+        }
+        mAdapter.notifyDataSetChanged();
+    }
+
     private void drawGraph() {
         int i, delta, duration;
         Date pirDate = null;
@@ -429,15 +448,16 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                         Log.w(TAG, "Error obtaining characteristic value");
                         return;
                     }
-                    String pirVlaue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0).toString();
+                    String pirValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0).toString();
                     for (int i = 1; i < 18; i++) {
-                        pirVlaue = pirVlaue + characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, i).toString();
+                        pirValue = pirValue + characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, i).toString();
                     }
-                    mPirValues.add(pirVlaue);
+                    mPirValues.add(pirValue);
                     if (msg.what == MSG_LAST) {
                         mProgress.hide();
                         Collections.sort(mPirValues, Collections.reverseOrder());
                         drawGraph();
+                        createList();
                         mConnectStatus.setText("Successful xfer of stats");
                     }
                     break;
