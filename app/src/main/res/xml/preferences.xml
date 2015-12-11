@@ -10,6 +10,15 @@
         android:summary="Please setup destnation email address"
         android:title="Email Address">
     </EditTextPreference>
+    <EditTextPreference
+        android:id="@+id/usetime"
+        android:backgroundTint="#008800"
+        android:textCursorDrawable="@null"
+        android:inputType="numberDecimal"
+        android:key="useTime"
+        android:summary="Time, in seconds, used to determine whether deposit is pee vs. poo"
+        android:title="Pee If Less Than">
+    </EditTextPreference>
     <CheckBoxPreference
         android:defaultValue="true"
         android:key="viewType"
