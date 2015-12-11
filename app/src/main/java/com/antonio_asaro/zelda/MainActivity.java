@@ -162,6 +162,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
 
         mListView = (ListView) findViewById(R.id.listView);
         mAdapter = new ArrayAdapter(this, android.R.layout.simple_expandable_list_item_1, android.R.id.text1, mPirList);
+        mPirList.add("abc "+ mNow.getTime());
         mListView.setAdapter(mAdapter);
 
         mGraphView = (GraphView) findViewById(R.id.graph);

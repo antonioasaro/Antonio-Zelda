@@ -13,8 +13,8 @@
     <CheckBoxPreference
         android:defaultValue="true"
         android:key="viewType"
-        android:summary="Selects GraphView vs. ListView"
-        android:title="ViewType Selection" />
+        android:summary="When checked, shows data in a graphical format"
+        android:title="GraphView vs. ListView" />
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="autoNotifications"

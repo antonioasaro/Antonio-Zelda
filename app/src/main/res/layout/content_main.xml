@@ -61,10 +61,11 @@
         android:visibility="gone"
         android:id="@+id/listView"
         android:layout_below="@+id/textView2"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="30dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginBottom="20dp"
         android:layout_alignTop="@+id/graph"
         android:layout_centerHorizontal="true"
+        android:background="@drawable/border_ui"
         android:layout_alignBottom="@+id/graph" />
 
 </RelativeLayout>
