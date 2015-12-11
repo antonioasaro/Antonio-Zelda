@@ -8,11 +8,9 @@ import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -33,7 +31,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -95,8 +92,8 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         setSupportActionBar(toolbar);
 
         mPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        FloatingActionButton mFab = (FloatingActionButton) findViewById(R.id.fab);
+        mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Snackbar.make(view, "Alerting the Mrs.", Snackbar.LENGTH_LONG).setAction("Action", null).show();
@@ -137,12 +134,12 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             public void onClick(View v) {
                 mScanStatus.setText("Scanning ...");
                 mDevice = null;
-////                startScan();
-                ContentValues values = new ContentValues();
-                values.put(PirDataContract.DepositEntry.DAY_OF, mNow.getTime());
-                values.put(PirDataContract.DepositEntry.TIME_OF, "09:23");
-                values.put(PirDataContract.DepositEntry.DURATION_OF, "34");
-                Uri uri = getContentResolver().insert(PirDataContract.CONTENT_URI, values);
+                startScan();
+//                ContentValues values = new ContentValues();
+//                values.put(PirDataContract.DepositEntry.DAY_OF, mNow.getTime());
+//                values.put(PirDataContract.DepositEntry.TIME_OF, "09:23");
+//                values.put(PirDataContract.DepositEntry.DURATION_OF, "34");
+//                Uri uri = getContentResolver().insert(PirDataContract.CONTENT_URI, values);
             }
         });
         mConnect = (Button) findViewById(R.id.button2);
@@ -151,12 +148,12 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             public void onClick(View v) {
                 mConnectStatus.setText("Connecting ...");
                 mPirValues.clear();
-////                connectDevice();
-                Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, null, null, null);
-                if (cursor.moveToFirst()) {
-                    Log.d(TAG, "Processing cursor from provider: " + cursor.getString(1));
-                    Toast.makeText(getApplicationContext(), "Processing cursor from provider: " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_OF)), Toast.LENGTH_LONG).show();
-                }
+                connectDevice();
+//                Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, null, null, null);
+//                if (cursor.moveToFirst()) {
+//                    Log.d(TAG, "Processing cursor from provider: " + cursor.getString(1));
+//                    Toast.makeText(getApplicationContext(), "Processing cursor from provider: " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_OF)), Toast.LENGTH_LONG).show();
+//                }
             }
         });
 
@@ -166,7 +163,6 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mProgress.setCancelable(false);
 
         mListView = (ListView) findViewById(R.id.listView);
-//        mAdapter = new ArrayAdapter(this, android.R.layout.simple_expandable_list_item_1, android.R.id.text1, mPirList);
         mAdapter = new PirListAdapter(this, R.layout.listview_item, R.id.listText, mPirList);
         mPirList.add("abc "+ mNow.getTime()); mPirList.add("def "+ mNow.getTime());
         mPirList.add("ijk "+ mNow.getTime()); mPirList.add("nop "+ mNow.getTime());
@@ -193,7 +189,6 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 int hour = calendar.get(Calendar.HOUR_OF_DAY);
                 int minute = calendar.get(Calendar.MINUTE);
                 String adjMin = ":" + ((minute < 10) ? ("0" + Integer.toString(minute)) : Integer.toString(minute));
-//                Log.d(TAG, "Label new: " + value + ", " + adjDate.toString());
                 if (isValueX) {
                     return super.formatLabel(hour, true) + adjMin;
                 } else {
@@ -337,7 +332,6 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     }
 
     private void createList() {
-        mPirList.clear();
         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss");
         for (int i = 0; i < MAXDEPTH; i++) {
             String pirDuration = mPirValues.get(i).substring(14, 18);
