@@ -13,8 +13,8 @@ import android.util.Log;
 import java.util.HashMap;
 
 public class PirDataProvider extends ContentProvider {
-
     private static final String TAG = "pirdataprovider";
+
     static final int PIRDATA = 100;
     static final int PIRDATA_ID = 101;
     static final UriMatcher sUriMatcher;

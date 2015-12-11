@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -26,8 +27,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -52,6 +55,7 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements BluetoothAdapter.LeScanCallback {
     private static final String TAG = "zelda";
+
     private static final String DEVICE_NAME = "ZELDA";
     private static final UUID ZELDA_SERVICE = UUID.fromString("0000ec00-0000-1000-8000-00805f9b34fb");
     private static final UUID ZELDA_CHARACTERISTIC = UUID.fromString("0000ec0e-0000-1000-8000-00805f9b34fb");
@@ -103,7 +107,8 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 intent.putExtra(Intent.EXTRA_EMAIL, addresses);
                 intent.putExtra(Intent.EXTRA_SUBJECT, "Project Zelda Poops");
 
-                String body = "Last deposits ...\n"; Date date;
+                String body = "Last deposits ...\n";
+                Date date;
                 SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss");
                 for (int i = 0; i < MAXDEPTH; i++) {
                     String pirDuration = mPirValues.get(i).substring(14, 18);
@@ -161,8 +166,11 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mProgress.setCancelable(false);
 
         mListView = (ListView) findViewById(R.id.listView);
-        mAdapter = new ArrayAdapter(this, android.R.layout.simple_expandable_list_item_1, android.R.id.text1, mPirList);
-        mPirList.add("abc "+ mNow.getTime());
+//        mAdapter = new ArrayAdapter(this, android.R.layout.simple_expandable_list_item_1, android.R.id.text1, mPirList);
+        mAdapter = new PirListAdapter(this, R.layout.listview_item, R.id.listText, mPirList);
+        mPirList.add("abc "+ mNow.getTime()); mPirList.add("def "+ mNow.getTime());
+        mPirList.add("ijk "+ mNow.getTime()); mPirList.add("nop "+ mNow.getTime());
+        mPirList.add("qrs "+ mNow.getTime()); mPirList.add("vce "+ mNow.getTime());
         mListView.setAdapter(mAdapter);
 
         mGraphView = (GraphView) findViewById(R.id.graph);
@@ -199,6 +207,20 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+    }
+
+    class PirListAdapter extends ArrayAdapter<String> {
+        PirListAdapter(Context c, int i, int j, ArrayList<String> s) {
+            super(c, i, j, s);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View row = super.getView(position, convertView, parent);
+            ImageView iv = (ImageView) row.findViewById(R.id.listImage);
+            iv.setImageResource(R.mipmap.ic_poop);
+            return row;
+        }
     }
 
     @Override

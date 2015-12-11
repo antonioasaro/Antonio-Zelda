@@ -6,7 +6,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 public class PirDataDbHelper extends SQLiteOpenHelper {
-
     private static final String TAG = "pirdatadbhelper";
 
     static final int DATABASE_VERSION = 2;
