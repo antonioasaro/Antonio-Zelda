@@ -138,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             @Override
             public void onClick(View v) {
                 ContentValues values = new ContentValues();
-                Uri uri = getContentResolver().insert(PirDataProvider.CONTENT_URI, values);
+                Uri uri = getContentResolver().insert(PirDataContract.CONTENT_URI, values);
                 mConnectStatus.setText("Connecting ...");
                 mPirValues.clear();
                 connectDevice();
