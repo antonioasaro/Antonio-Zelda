@@ -26,6 +26,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -77,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private SharedPreferences mPreferences;
     private boolean mViewType;
     private ArrayAdapter mAdapter;
+    private FloatingActionButton mFab;
 
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -92,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         setSupportActionBar(toolbar);
 
         mPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        FloatingActionButton mFab = (FloatingActionButton) findViewById(R.id.fab);
+        mFab = (FloatingActionButton) findViewById(R.id.fab);
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -162,12 +164,22 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mProgress.setIndeterminate(true);
         mProgress.setCancelable(false);
 
+        mPirList.add("abc "+ mNow.getTime()); mPirList.add("def " + mNow.getTime());
+        mPirList.add("ijk " + mNow.getTime()); mPirList.add("nop "+ mNow.getTime());
+        mPirList.add("qrs " + mNow.getTime()); mPirList.add("vce " + mNow.getTime());
         mListView = (ListView) findViewById(R.id.listView);
         mAdapter = new PirListAdapter(this, R.layout.listview_item, R.id.listText, mPirList);
-        mPirList.add("abc "+ mNow.getTime()); mPirList.add("def "+ mNow.getTime());
-        mPirList.add("ijk "+ mNow.getTime()); mPirList.add("nop "+ mNow.getTime());
-        mPirList.add("qrs "+ mNow.getTime()); mPirList.add("vce "+ mNow.getTime());
         mListView.setAdapter(mAdapter);
+        mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                if (scrollState != SCROLL_STATE_IDLE) mFab.hide(); else mFab.show();
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+            }
+        });
 
         mGraphView = (GraphView) findViewById(R.id.graph);
         mGraphView.setTitle("    Last day's deposits -->");
