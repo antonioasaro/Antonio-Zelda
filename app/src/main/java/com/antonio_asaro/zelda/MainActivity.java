@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             public void onClick(View v) {
                 mScanStatus.setText("Scanning ...");
                 mDevice = null;
-                startScan();
+//                startScan();
 //                ContentValues values = new ContentValues();
 //                values.put(PirDataContract.DepositEntry.DAY_OF, mNow.getTime());
 //                values.put(PirDataContract.DepositEntry.TIME_OF, "09:23");
@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             public void onClick(View v) {
                 mConnectStatus.setText("Connecting ...");
                 mPirValues.clear();
-                connectDevice();
+//                connectDevice();
 //                Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, null, null, null);
 //                if (cursor.moveToFirst()) {
 //                    Log.d(TAG, "Processing cursor from provider: " + cursor.getString(1));
