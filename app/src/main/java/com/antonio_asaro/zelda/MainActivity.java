@@ -218,7 +218,11 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         public View getView(int position, View convertView, ViewGroup parent) {
             View row = super.getView(position, convertView, parent);
             ImageView iv = (ImageView) row.findViewById(R.id.listImage);
-            iv.setImageResource(R.mipmap.ic_poop);
+            if (position > 2) {
+                iv.setImageResource(R.mipmap.ic_pee);
+            } else {
+                iv.setImageResource(R.mipmap.ic_poop);
+            }
             return row;
         }
     }
