@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 String addresses[] = new String[1];
                 addresses[0] = mPreferences.getString("emailAddress", "Default email address");
                 Intent intent = new Intent(Intent.ACTION_SENDTO);
-                intent.setData(Uri.parse("mailto:")); // only email apps should handle this
+                intent.setData(Uri.parse("mailto:"));
                 intent.putExtra(Intent.EXTRA_EMAIL, addresses);
                 intent.putExtra(Intent.EXTRA_SUBJECT, "Project Zelda Poops");
 
@@ -163,7 +163,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                     processData();
                     createList();
                 }
-                extraPirList();
+
             }
         });
 
@@ -408,19 +408,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             mPirList.add(String.valueOf(sb));
 //            Toast.makeText(getApplicationContext(), "Processing cursor from provider: " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_OF)), Toast.LENGTH_LONG).show();
         }
-//        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss");
-//        for (int i = 0; i < MAXDEPTH; i++) {
-//            String pirDuration = mPirValues.get(i).substring(14, 18);
-//            if (!pirDuration.equals("0000")) {
-//                try {
-//                    Date date = DATE_FORMAT.parse(mPirValues.get(i).substring(0, 14));
-//                    mPirList.add(sdf.format(date) + " - " + Integer.parseInt(pirDuration) + " secs");
-//                } catch (Exception e) {
-//                    Log.d(TAG, "Date conversion failed");
-//                    return;
-//                }
-//            }
-//        }
+        extraPirList();
         mAdapter.notifyDataSetChanged();
     }
 
