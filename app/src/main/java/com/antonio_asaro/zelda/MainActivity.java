@@ -8,9 +8,11 @@ import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -62,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private static final int MINUTES = 5;
     private static final int INTERVALS = 24 * 60 / MINUTES;
     private static final int VIEWSCALE = 32;
+    private static final int TIMEOUT = 15;
 
     private Date mNow = new Date();
     private BluetoothAdapter mBluetoothAdapter;
@@ -136,12 +139,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             public void onClick(View v) {
                 mScanStatus.setText("Scanning ...");
                 mDevice = null;
-//                startScan();
-//                ContentValues values = new ContentValues();
-//                values.put(PirDataContract.DepositEntry.DAY_OF, mNow.getTime());
-//                values.put(PirDataContract.DepositEntry.TIME_OF, "09:23");
-//                values.put(PirDataContract.DepositEntry.DURATION_OF, "34");
-//                Uri uri = getContentResolver().insert(PirDataContract.CONTENT_URI, values);
+                startScan();
             }
         });
         mConnect = (Button) findViewById(R.id.button2);
@@ -150,12 +148,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             public void onClick(View v) {
                 mConnectStatus.setText("Connecting ...");
                 mPirValues.clear();
-//                connectDevice();
-//                Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, null, null, null);
-//                if (cursor.moveToFirst()) {
-//                    Log.d(TAG, "Processing cursor from provider: " + cursor.getString(1));
-//                    Toast.makeText(getApplicationContext(), "Processing cursor from provider: " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_OF)), Toast.LENGTH_LONG).show();
-//                }
+                connectDevice();
             }
         });
 
@@ -164,20 +157,19 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mProgress.setIndeterminate(true);
         mProgress.setCancelable(false);
 
-        mPirList.add("abc "+ mNow.getTime()); mPirList.add("def " + mNow.getTime());
-        mPirList.add("ijk " + mNow.getTime()); mPirList.add("nop "+ mNow.getTime());
-        mPirList.add("qrs " + mNow.getTime()); mPirList.add("vce " + mNow.getTime());
         mListView = (ListView) findViewById(R.id.listView);
         mAdapter = new PirListAdapter(this, R.layout.listview_item, R.id.listText, mPirList);
         mListView.setAdapter(mAdapter);
         mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
-                if (scrollState != SCROLL_STATE_IDLE) mFab.hide(); else mFab.show();
+                if (scrollState == SCROLL_STATE_TOUCH_SCROLL) mFab.hide();
+                else mFab.show();
             }
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                mFab.show();
             }
         });
 
@@ -216,24 +208,6 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
-    class PirListAdapter extends ArrayAdapter<String> {
-        PirListAdapter(Context c, int i, int j, ArrayList<String> s) {
-            super(c, i, j, s);
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View row = super.getView(position, convertView, parent);
-            ImageView iv = (ImageView) row.findViewById(R.id.listImage);
-            if (position > 1) {
-                iv.setImageResource(R.mipmap.ic_pee);
-            } else {
-                iv.setImageResource(R.mipmap.ic_poop);
-            }
-            return row;
-        }
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -260,6 +234,26 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mHandler.removeCallbacks(mStopRunnable);
         mHandler.removeCallbacks(mStartRunnable);
         mBluetoothAdapter.stopLeScan(this);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://com.antonio_asaro.zelda/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
     }
 
     @Override
@@ -343,20 +337,79 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mConnectedGatt = device.connectGatt(getApplicationContext(), true, mGattCallback);
     }
 
-    private void createList() {
+    class PirListAdapter extends ArrayAdapter<String> {
+        PirListAdapter(Context c, int i, int j, ArrayList<String> s) {
+            super(c, i, j, s);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View row = super.getView(position, convertView, parent);
+            ImageView iv = (ImageView) row.findViewById(R.id.listImage);
+            if (position > 1) {
+                iv.setImageResource(R.mipmap.ic_pee);
+            } else {
+                iv.setImageResource(R.mipmap.ic_poop);
+            }
+            return row;
+        }
+    }
+
+    private void processData() {
+        int i, delta, duration;
+        mNow = new Date();
+        Date pirDate;
         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss");
-        for (int i = 0; i < MAXDEPTH; i++) {
+
+        for (i = 0; i < MAXDEPTH; i++) {
             String pirDuration = mPirValues.get(i).substring(14, 18);
             if (!pirDuration.equals("0000")) {
                 try {
-                    Date date = DATE_FORMAT.parse(mPirValues.get(i).substring(0, 14));
-                    mPirList.add(sdf.format(date) + " - " + Integer.parseInt(pirDuration) + " secs");
+                    pirDate = DATE_FORMAT.parse(mPirValues.get(i).substring(0, 14));
                 } catch (Exception e) {
                     Log.d(TAG, "Date conversion failed");
                     return;
                 }
+                delta = (int) Math.abs((mNow.getTime() - pirDate.getTime()) / 1000 / 60);
+                if (delta > TIMEOUT) {
+                    ContentValues contentValues = new ContentValues();
+                    String contentString = sdf.format(pirDate);
+                    contentValues.put(PirDataContract.DepositEntry.DAY_OF, contentString.substring(0, 10));
+                    contentValues.put(PirDataContract.DepositEntry.TIME_OF, contentString.substring(11, 19));
+                    contentValues.put(PirDataContract.DepositEntry.DURATION_OF, pirDuration);
+                    Uri uri = getContentResolver().insert(PirDataContract.CONTENT_URI, contentValues);
+                }
             }
         }
+    }
+
+    private void createList() {
+        Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, null, null, null);
+        while (cursor.moveToNext()) {
+//            Log.d(TAG, "Processing cursor from provider: " + cursor.getString(1));
+            StringBuilder sb = new StringBuilder();
+            sb.append(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_OF)));
+            sb.append(" ");
+            sb.append(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.TIME_OF)));
+            sb.append("\n");
+            sb.append(Integer.parseInt(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DURATION_OF))));
+            sb.append(" secs");
+            mPirList.add(String.valueOf(sb));
+//            Toast.makeText(getApplicationContext(), "Processing cursor from provider: " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_OF)), Toast.LENGTH_LONG).show();
+        }
+//        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss");
+//        for (int i = 0; i < MAXDEPTH; i++) {
+//            String pirDuration = mPirValues.get(i).substring(14, 18);
+//            if (!pirDuration.equals("0000")) {
+//                try {
+//                    Date date = DATE_FORMAT.parse(mPirValues.get(i).substring(0, 14));
+//                    mPirList.add(sdf.format(date) + " - " + Integer.parseInt(pirDuration) + " secs");
+//                } catch (Exception e) {
+//                    Log.d(TAG, "Date conversion failed");
+//                    return;
+//                }
+//            }
+//        }
         mAdapter.notifyDataSetChanged();
     }
 
@@ -393,7 +446,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
 
     @Override
     public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-        Log.i(TAG, "New LE Device: " + device.getName() + " @ " + rssi);
+        Log.i(TAG, "New Bluetooth LE Device: " + device.getName() + " @ " + rssi);
         if (DEVICE_NAME.equals(device.getName())) {
             mScanStatus.setText("Found: " + device.getName());
             mDevice = device;
@@ -496,34 +549,16 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                     }
                     mPirValues.add(pirValue);
                     if (msg.what == MSG_LAST) {
+                        mConnectStatus.setText("Successful xfer of stats");
                         mProgress.hide();
                         Collections.sort(mPirValues, Collections.reverseOrder());
+                        processData();
                         drawGraph();
                         createList();
-                        mConnectStatus.setText("Successful xfer of stats");
                     }
                     break;
             }
         }
     };
 
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client.connect();
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "Main Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app deep link URI is correct.
-                Uri.parse("android-app://com.antonio_asaro.zelda/http/host/path")
-        );
-        AppIndex.AppIndexApi.start(client, viewAction);
-    }
 }

@@ -68,7 +68,7 @@
         android:layout_marginRight="10dp"
         android:layout_alignTop="@+id/graph"
         android:layout_centerHorizontal="true"
-
+        android:fadeScrollbars="true"
         android:layout_alignBottom="@+id/graph" />
 
 </RelativeLayout>
