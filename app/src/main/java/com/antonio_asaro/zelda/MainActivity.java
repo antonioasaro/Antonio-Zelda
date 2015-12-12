@@ -353,7 +353,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
 
     private void testPirValues() {
         mPirValues.add("151012120850230021");
-        mPirValues.add("151012120920230100");
+        mPirValues.add("151012121123230100");
         for (int i = 2; i < MAXDEPTH; i++) mPirValues.add("000000000000000000");
     }
 
@@ -383,12 +383,21 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 }
                 delta = (int) Math.abs((mNow.getTime() - pirDate.getTime()) / 1000 / 60);
                 if (delta > TIMEOUT) {
-                    ContentValues contentValues = new ContentValues();
                     String contentString = sdf.format(pirDate);
-                    contentValues.put(PirDataContract.DepositEntry.DAY_OF, contentString.substring(0, 10));
-                    contentValues.put(PirDataContract.DepositEntry.TIME_OF, contentString.substring(11, 19));
-                    contentValues.put(PirDataContract.DepositEntry.DURATION_OF, pirDuration);
-                    Uri uri = getContentResolver().insert(PirDataContract.CONTENT_URI, contentValues);
+                    String day_of = contentString.substring(0, 10);
+                    String time_of = contentString.substring(11, 19);
+                    String whereClause = PirDataContract.DepositEntry.DAY_OF + " = ? AND " + PirDataContract.DepositEntry.TIME_OF + " = ?";
+                    String[] whereArgs = {day_of, time_of};
+                    Log.d(TAG, "Trying to insert: " + contentString);
+                    Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, whereClause, whereArgs, null);
+                    if (!cursor.moveToNext()) {
+                        Log.d(TAG, "Adding new entry to database");
+                        ContentValues contentValues = new ContentValues();
+                        contentValues.put(PirDataContract.DepositEntry.DAY_OF, day_of);
+                        contentValues.put(PirDataContract.DepositEntry.TIME_OF, time_of);
+                        contentValues.put(PirDataContract.DepositEntry.DURATION_OF, pirDuration);
+                        Uri uri = getContentResolver().insert(PirDataContract.CONTENT_URI, contentValues);
+                    }
                 }
             }
         }
