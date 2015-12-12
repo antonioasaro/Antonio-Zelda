@@ -70,6 +70,7 @@ public class PirDataProvider extends ContentProvider {
 
     @Override
     public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
+        Log.d(TAG, "Calling delete of provider");
         return 0;
     }
 

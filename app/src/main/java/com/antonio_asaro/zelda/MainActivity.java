@@ -54,7 +54,7 @@ import java.util.GregorianCalendar;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements BluetoothAdapter.LeScanCallback {
-    private static final String TAG = "zelda";
+    private static final String TAG = "zeldamain";
 
     private static final String DEVICE_NAME = "ZELDA";
     private static final UUID ZELDA_SERVICE = UUID.fromString("0000ec00-0000-1000-8000-00805f9b34fb");
@@ -178,14 +178,13 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
-                if (scrollState == SCROLL_STATE_TOUCH_SCROLL) mFab.hide();
-                else mFab.show();
+               if (scrollState == SCROLL_STATE_IDLE) mFab.show(); else mFab.hide();
             }
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                mFab.show();
             }
+
         });
 
         mGraphView = (GraphView) findViewById(R.id.graph);
@@ -315,6 +314,10 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         if (id == R.id.action_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
+            return true;
+        }
+        if (id == R.id.delete_database) {
+            getContentResolver().delete(PirDataContract.CONTENT_URI, null, null);
             return true;
         }
         return super.onOptionsItemSelected(item);
