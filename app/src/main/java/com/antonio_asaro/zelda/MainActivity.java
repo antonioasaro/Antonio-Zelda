@@ -137,18 +137,33 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mScan.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Boolean testMode = mPreferences.getBoolean("testMode", false);
                 mScanStatus.setText("Scanning ...");
                 mDevice = null;
-                startScan();
+                if (!testMode) {
+                    startScan();
+                } else {
+                    mScanStatus.setText("Testmode: Found Zelda");
+                }
             }
         });
         mConnect = (Button) findViewById(R.id.button2);
         mConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Boolean testMode = mPreferences.getBoolean("testMode", false);
                 mConnectStatus.setText("Connecting ...");
                 mPirValues.clear();
-                connectDevice();
+                mPirList.clear();
+                if (!testMode) {
+                    connectDevice();
+                } else {
+                    mConnectStatus.setText("Testmode: Successful xfer of stats");
+                    testPirValues();
+                    processData();
+                    createList();
+                }
+                extraPirList();
             }
         });
 
@@ -305,54 +320,49 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         return super.onOptionsItemSelected(item);
     }
 
-    private Runnable mStopRunnable = new Runnable() {
-        @Override
-        public void run() {
-            stopScan();
-        }
-    };
-
-    private Runnable mStartRunnable = new Runnable() {
-        @Override
-        public void run() {
-            startScan();
-        }
-    };
-
-    private void startScan() {
-        mBluetoothAdapter.startLeScan(this);
-        setProgressBarIndeterminateVisibility(true);
-        mHandler.postDelayed(mStopRunnable, 2000);
-    }
-
-    private void stopScan() {
-        mBluetoothAdapter.stopLeScan(this);
-        setProgressBarIndeterminateVisibility(false);
-        if (mDevice == null) mScanStatus.setText("No devices found!!");
-    }
-
-    private void connectDevice() {
-        mHandler.sendMessage(Message.obtain(null, MSG_PROGRESS, "Connecting ..."));
-        BluetoothDevice device = mDevice;
-        mConnectedGatt = device.connectGatt(getApplicationContext(), true, mGattCallback);
-    }
-
     class PirListAdapter extends ArrayAdapter<String> {
+        ArrayList<String> pirItems = new ArrayList<>();
+
         PirListAdapter(Context c, int i, int j, ArrayList<String> s) {
             super(c, i, j, s);
+            pirItems = s;
         }
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             View row = super.getView(position, convertView, parent);
             ImageView iv = (ImageView) row.findViewById(R.id.listImage);
-            if (position > 1) {
-                iv.setImageResource(R.mipmap.ic_pee);
+            TextView tv = (TextView) row.findViewById(R.id.listText);
+            String item = pirItems.get(position);
+            if (item.equals("...")) {
+                iv.setImageResource(R.mipmap.ic_blank);
             } else {
-                iv.setImageResource(R.mipmap.ic_poop);
+//                Log.d(TAG, "Item is: " + item.substring(20,24));
+                Integer threshold = Integer.parseInt(mPreferences.getString("useTime", "0060"));
+                Integer duration = Integer.parseInt(item.substring(20, 24));
+                tv.setText(item.substring(0, 20) + duration + " secs");
+                if (duration < threshold) {
+                    iv.setImageResource(R.mipmap.ic_pee);
+                } else {
+                    iv.setImageResource(R.mipmap.ic_poop);
+                }
             }
             return row;
         }
+    }
+
+    private void testPirValues() {
+        mPirValues.add("151012120850230021");
+        mPirValues.add("151012120920230100");
+        for (int i = 2; i < MAXDEPTH; i++) mPirValues.add("000000000000000000");
+    }
+
+    private void extraPirList() {
+        for (int i = 0; i < 4; i++) {
+            mPirList.add("...");
+        }
+        mAdapter.notifyDataSetChanged();
+
     }
 
     private void processData() {
@@ -361,6 +371,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         Date pirDate;
         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss");
 
+        Collections.sort(mPirValues, Collections.reverseOrder());
         for (i = 0; i < MAXDEPTH; i++) {
             String pirDuration = mPirValues.get(i).substring(14, 18);
             if (!pirDuration.equals("0000")) {
@@ -392,7 +403,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             sb.append(" ");
             sb.append(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.TIME_OF)));
             sb.append("\n");
-            sb.append(Integer.parseInt(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DURATION_OF))));
+            sb.append(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DURATION_OF)));
             sb.append(" secs");
             mPirList.add(String.valueOf(sb));
 //            Toast.makeText(getApplicationContext(), "Processing cursor from provider: " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_OF)), Toast.LENGTH_LONG).show();
@@ -442,6 +453,38 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         dataSeries.setColor(Color.rgb(0, 128, 0));
         mGraphView.removeAllSeries();
         mGraphView.addSeries(dataSeries);
+    }
+
+    private Runnable mStopRunnable = new Runnable() {
+        @Override
+        public void run() {
+            stopScan();
+        }
+    };
+
+    private Runnable mStartRunnable = new Runnable() {
+        @Override
+        public void run() {
+            startScan();
+        }
+    };
+
+    private void startScan() {
+        mBluetoothAdapter.startLeScan(this);
+        setProgressBarIndeterminateVisibility(true);
+        mHandler.postDelayed(mStopRunnable, 2000);
+    }
+
+    private void stopScan() {
+        mBluetoothAdapter.stopLeScan(this);
+        setProgressBarIndeterminateVisibility(false);
+        if (mDevice == null) mScanStatus.setText("No devices found!!");
+    }
+
+    private void connectDevice() {
+        mHandler.sendMessage(Message.obtain(null, MSG_PROGRESS, "Connecting ..."));
+        BluetoothDevice device = mDevice;
+        mConnectedGatt = device.connectGatt(getApplicationContext(), true, mGattCallback);
     }
 
     @Override
@@ -551,10 +594,9 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                     if (msg.what == MSG_LAST) {
                         mConnectStatus.setText("Successful xfer of stats");
                         mProgress.hide();
-                        Collections.sort(mPirValues, Collections.reverseOrder());
                         processData();
-                        drawGraph();
                         createList();
+                        drawGraph();
                     }
                     break;
             }

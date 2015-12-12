@@ -29,5 +29,9 @@
         android:key="autoNotifications"
         android:summary="This option, if selected, will auto-update the statistics, when connected"
         android:title="Automatic Notifications" />
-
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="testMode"
+        android:summary="Enables testmode. Bluetooth scan + read operations are simulated"
+        android:title="Test Mode" />
 </PreferenceScreen>
