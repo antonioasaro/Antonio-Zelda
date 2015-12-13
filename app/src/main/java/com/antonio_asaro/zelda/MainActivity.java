@@ -408,7 +408,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     }
 
     private void createList() {
-        Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, null, null, null);
+        Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, null, null, PirDataContract.DepositEntry.DAY_TIME_OF + " DESC");
         while (cursor.moveToNext()) {
             Log.d(TAG, "Processing cursor from provider: " + cursor.getString(1));
             StringBuilder sb = new StringBuilder();
