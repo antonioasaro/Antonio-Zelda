@@ -344,9 +344,9 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             if (item.equals("...")) {
                 iv.setImageResource(R.mipmap.ic_blank);
             } else {
-//                Log.d(TAG, "Item is: " + item.substring(15,19));
+                Log.d(TAG, "Item is: " + item.substring(20,24));
                 Integer threshold = Integer.parseInt(mPreferences.getString("useTime", "0060"));
-                Integer duration = Integer.parseInt(item.substring(15, 19));
+                Integer duration = Integer.parseInt(item.substring(20, 24));
                 tv.setText(item.substring(0, 20) + duration + " secs");
                 if (duration < threshold) {
                     iv.setImageResource(R.mipmap.ic_pee);
@@ -362,8 +362,9 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mPirValues.add("201512120850230021");
         mPirValues.add("201512121123230100");
         mPirValues.add("201512121124560005");
+        mPirValues.add("201512121127430007");
         mPirValues.add("201512131901070013");
-        for (int i = 4; i < MAXDEPTH; i++) mPirValues.add("000000000000000000");
+        for (int i = 5; i < MAXDEPTH; i++) mPirValues.add("000000000000000000");
     }
 
     private void extraPirList() {
@@ -414,16 +415,17 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss");
         boolean empty = true;
         Date pushDate=null, pirDate;
+        Integer pushDurationOf=0;
 
         Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, null, null, PirDataContract.DepositEntry.DAY_TIME_OF + " ASC");
         while (cursor.moveToNext()) {
             Log.d(TAG, "Processing cursor: " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF)));
             String day_time_of = cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF));
-            String duration_of = cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DURATION_OF));
-            String pushDayTimeOf, pushDurationOf;
+            Integer duration_of = Integer.parseInt(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DURATION_OF)));
+//            String pushDayTimeOf=null, pushDurationOf=null;
             if (empty) {
 //                pushDayTimeOf = day_time_of;
-//                pushDurationOf = duration_of;
+                pushDurationOf = duration_of;
                 try {
                     pushDate = DATE_FORMAT.parse(day_time_of);
                 } catch (Exception e) {
@@ -439,16 +441,17 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                     Log.d(TAG, "Date1 conversion failed");
                     return;
                 }
-                int delta = (int) Math.abs((pushDate.getTime() - pirDate.getTime()) / 1000 / 60);
+                int delta = (int) Math.abs((pushDate.getTime() - pirDate.getTime()) / 1000);
                 Log.d(TAG, "Delta time is: " + delta);
-                if (delta < GROUP) {
+                if (delta < GROUP * 60) {
                     Log.d(TAG, "Group this one: " + sdf.format(pushDate));
+                    pushDurationOf = delta + duration_of;
                 } else {
                     Log.d(TAG, "Add this one: " + sdf.format(pushDate));
                     StringBuilder sb = new StringBuilder();
-                    sb.append(day_time_of);
+                    sb.append(sdf.format(pushDate));
                     sb.append("\n");
-                    sb.append(duration_of);
+                    sb.append(String.format("%04d", pushDurationOf));
                     sb.append(" secs");
                     mPirList.add(String.valueOf(sb));
                     pushDate = pirDate;
