@@ -64,7 +64,7 @@ public class PirDataProvider extends ContentProvider {
     @Override
     public Uri insert(@NonNull Uri uri, ContentValues values) {
         long _id = mDatabase.insert(PirDataContract.TABLE_NAME, null, values);
-        Log.d(TAG, "Calling insert of provider " + _id);
+        Log.d(TAG, "Calling insert of provider ");
         return null;
     }
 

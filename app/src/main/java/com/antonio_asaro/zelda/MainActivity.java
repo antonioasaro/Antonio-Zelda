@@ -65,7 +65,8 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private static final int MINUTES = 5;
     private static final int INTERVALS = 24 * 60 / MINUTES;
     private static final int VIEWSCALE = 32;
-    private static final int TIMEOUT = 15;
+    private static final int IGNORE = 15;
+    private static final int GROUP = 5;
 
     private Date mNow = new Date();
     private BluetoothAdapter mBluetoothAdapter;
@@ -111,18 +112,18 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 intent.putExtra(Intent.EXTRA_SUBJECT, "Project Zelda Poops");
 
                 String body = "Last deposits ...\n";
-                Date date;
+                Date pirData;
                 SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss");
                 for (int i = 0; i < MAXDEPTH; i++) {
                     String pirDuration = mPirValues.get(i).substring(14, 18);
                     if (!pirDuration.equals("0000")) {
                         try {
-                            date = DATE_FORMAT.parse(mPirValues.get(i).substring(0, 14));
+                            pirData = DATE_FORMAT.parse(mPirValues.get(i).substring(0, 14));
                         } catch (Exception e) {
                             Log.d(TAG, "Date conversion failed");
                             return;
                         }
-                        body = body + "\n" + sdf.format(date) + " - " + Integer.parseInt(pirDuration) + " secs";
+                        body = body + "\n" + sdf.format(pirData) + " - " + Integer.parseInt(pirDuration) + " secs";
                     }
                 }
                 intent.putExtra(Intent.EXTRA_TEXT, body + "\n");
@@ -343,9 +344,9 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             if (item.equals("...")) {
                 iv.setImageResource(R.mipmap.ic_blank);
             } else {
-//                Log.d(TAG, "Item is: " + item.substring(20,24));
+//                Log.d(TAG, "Item is: " + item.substring(15,19));
                 Integer threshold = Integer.parseInt(mPreferences.getString("useTime", "0060"));
-                Integer duration = Integer.parseInt(item.substring(20, 24));
+                Integer duration = Integer.parseInt(item.substring(15, 19));
                 tv.setText(item.substring(0, 20) + duration + " secs");
                 if (duration < threshold) {
                     iv.setImageResource(R.mipmap.ic_pee);
@@ -358,8 +359,8 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     }
 
     private void testPirValues() {
-        mPirValues.add("151012120850230021");
-        mPirValues.add("151012121123230100");
+        mPirValues.add("201512120850230021");
+        mPirValues.add("201512121123230100");
         for (int i = 2; i < MAXDEPTH; i++) mPirValues.add("000000000000000000");
     }
 
@@ -372,10 +373,10 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     }
 
     private void processData() {
-        int i, delta, duration;
+        int i;
         mNow = new Date();
         Date pirDate;
-        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss");
+//        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss");
 
         Collections.sort(mPirValues, Collections.reverseOrder());
         for (i = 0; i < MAXDEPTH; i++) {
@@ -387,13 +388,13 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                     Log.d(TAG, "Date conversion failed");
                     return;
                 }
-                delta = (int) Math.abs((mNow.getTime() - pirDate.getTime()) / 1000 / 60);
-                if (delta > TIMEOUT) {
-                    String contentString = sdf.format(pirDate);
-                    String day_time_of = contentString.substring(0, 19);
+                int delta = (int) Math.abs((mNow.getTime() - pirDate.getTime()) / 1000 / 60);
+                if (delta > IGNORE) {
+//                    String contentString = mPirValues.get(i).substring(0, 14);
+                    String day_time_of = mPirValues.get(i).substring(0, 14); // contentString.substring(0, 19);
                     String whereClause = PirDataContract.DepositEntry.DAY_TIME_OF + " = ?";
                     String[] whereArgs = {day_time_of};
-                    Log.d(TAG, "Trying to insert: " + contentString);
+                    Log.d(TAG, "Trying to insert: " + day_time_of);
                     Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, whereClause, whereArgs, null);
                     if (!cursor.moveToNext()) {
                         Log.d(TAG, "Adding new entry to database");
@@ -408,15 +409,49 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     }
 
     private void createList() {
+        boolean empty = true;
+        Date pushDate=null, pirDate=null;
+
         Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, null, null, PirDataContract.DepositEntry.DAY_TIME_OF + " DESC");
         while (cursor.moveToNext()) {
-            Log.d(TAG, "Processing cursor from provider: " + cursor.getString(1));
-            StringBuilder sb = new StringBuilder();
-            sb.append(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF)));
-            sb.append("\n");
-            sb.append(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DURATION_OF)));
-            sb.append(" secs");
-            mPirList.add(String.valueOf(sb));
+            Log.d(TAG, "Processing cursor from provider: " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF)));
+            String day_time_of = cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF));
+            String duration_of = cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DURATION_OF));
+            String pushDayTimeOf, pushDurationOf;
+            if (empty) {
+                pushDayTimeOf = day_time_of;
+                pushDurationOf = duration_of;
+                try {
+                    Log.d(TAG, "Trying0 to convert " + day_time_of);
+                    pushDate = DATE_FORMAT.parse(pushDayTimeOf);
+                } catch (Exception e) {
+                    Log.d(TAG, "Date0 conversion failed");
+                    return;
+                }
+                empty = false;
+            } else {
+                try {
+                    pirDate = DATE_FORMAT.parse(day_time_of);
+                } catch (Exception e) {
+                    Log.d(TAG, "Date1 conversion failed");
+                    return;
+                }
+                int delta = (int) Math.abs((pushDate.getTime() - pirDate.getTime()) / 1000 / 60);
+                if (delta < GROUP) {
+                    Log.d(TAG, "Should group this one");
+                } else {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(day_time_of);
+                    sb.append("\n");
+                    sb.append(duration_of);
+                    sb.append(" secs");
+                    mPirList.add(String.valueOf(sb));
+                    empty = true;
+                }
+            }
+            if (!empty) {
+                Log.d(TAG, "One last one to add");
+            }
         }
         extraPirList();
         mAdapter.notifyDataSetChanged();

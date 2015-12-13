@@ -8,7 +8,7 @@ import android.util.Log;
 public class PirDataDbHelper extends SQLiteOpenHelper {
     private static final String TAG = "pirdatadbhelper";
 
-    static final int DATABASE_VERSION = 3;
+    static final int DATABASE_VERSION = 4;
     private static final String SQL_CREATE =
                     " CREATE TABLE " + PirDataContract.TABLE_NAME +
                     " (_id INTEGER PRIMARY KEY, " +
