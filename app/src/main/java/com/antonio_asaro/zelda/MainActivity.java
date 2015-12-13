@@ -186,6 +186,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             }
 
         });
+        extraPirList();
 
         mGraphView = (GraphView) findViewById(R.id.graph);
         mGraphView.setTitle("    Last day's deposits -->");
