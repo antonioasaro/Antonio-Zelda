@@ -13,8 +13,7 @@ public class PirDataContract {
     public static final String TABLE_NAME = "deposits";
 
     public static final class DepositEntry implements BaseColumns {
-        public static final String DAY_OF = "DAY_OF";
-        public static final String TIME_OF = "TIME_OF";
+        public static final String DAY_TIME_OF = "DAY_TIME_OF";
         public static final String DURATION_OF = "DURATION_OF";
     }
 

@@ -8,12 +8,11 @@ import android.util.Log;
 public class PirDataDbHelper extends SQLiteOpenHelper {
     private static final String TAG = "pirdatadbhelper";
 
-    static final int DATABASE_VERSION = 2;
+    static final int DATABASE_VERSION = 3;
     private static final String SQL_CREATE =
                     " CREATE TABLE " + PirDataContract.TABLE_NAME +
                     " (_id INTEGER PRIMARY KEY, " +
-                    " DAY_OF TEXT NOT NULL , " +
-                    " TIME_OF TEXT NOT NULL ," +
+                    " DAY_TIME_OF TEXT NOT NULL , " +
                     " DURATION_OF TEXT NOT NULL );";
     private static final String SQL_DROP = "DROP TABLE IF EXISTS " + PirDataContract.TABLE_NAME;
 

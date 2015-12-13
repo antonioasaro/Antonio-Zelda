@@ -71,6 +71,7 @@ public class PirDataProvider extends ContentProvider {
     @Override
     public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
         Log.d(TAG, "Calling delete of provider");
+        mDatabase.delete(PirDataContract.TABLE_NAME, null, null);
         return 0;
     }
 

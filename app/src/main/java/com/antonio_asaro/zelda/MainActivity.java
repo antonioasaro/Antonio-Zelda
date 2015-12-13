@@ -34,6 +34,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -319,6 +320,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         }
         if (id == R.id.delete_database) {
             getContentResolver().delete(PirDataContract.CONTENT_URI, null, null);
+            Toast.makeText(getApplicationContext(), "Deleted Database", Toast.LENGTH_LONG).show();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -388,17 +390,15 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 delta = (int) Math.abs((mNow.getTime() - pirDate.getTime()) / 1000 / 60);
                 if (delta > TIMEOUT) {
                     String contentString = sdf.format(pirDate);
-                    String day_of = contentString.substring(0, 10);
-                    String time_of = contentString.substring(11, 19);
-                    String whereClause = PirDataContract.DepositEntry.DAY_OF + " = ? AND " + PirDataContract.DepositEntry.TIME_OF + " = ?";
-                    String[] whereArgs = {day_of, time_of};
+                    String day_time_of = contentString.substring(0, 19);
+                    String whereClause = PirDataContract.DepositEntry.DAY_TIME_OF + " = ?";
+                    String[] whereArgs = {day_time_of};
                     Log.d(TAG, "Trying to insert: " + contentString);
                     Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, whereClause, whereArgs, null);
                     if (!cursor.moveToNext()) {
                         Log.d(TAG, "Adding new entry to database");
                         ContentValues contentValues = new ContentValues();
-                        contentValues.put(PirDataContract.DepositEntry.DAY_OF, day_of);
-                        contentValues.put(PirDataContract.DepositEntry.TIME_OF, time_of);
+                        contentValues.put(PirDataContract.DepositEntry.DAY_TIME_OF, day_time_of);
                         contentValues.put(PirDataContract.DepositEntry.DURATION_OF, pirDuration);
                         Uri uri = getContentResolver().insert(PirDataContract.CONTENT_URI, contentValues);
                     }
@@ -410,16 +410,13 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private void createList() {
         Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, null, null, null);
         while (cursor.moveToNext()) {
-//            Log.d(TAG, "Processing cursor from provider: " + cursor.getString(1));
+            Log.d(TAG, "Processing cursor from provider: " + cursor.getString(1));
             StringBuilder sb = new StringBuilder();
-            sb.append(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_OF)));
-            sb.append(" ");
-            sb.append(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.TIME_OF)));
+            sb.append(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF)));
             sb.append("\n");
             sb.append(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DURATION_OF)));
             sb.append(" secs");
             mPirList.add(String.valueOf(sb));
-//            Toast.makeText(getApplicationContext(), "Processing cursor from provider: " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_OF)), Toast.LENGTH_LONG).show();
         }
         extraPirList();
         mAdapter.notifyDataSetChanged();
