@@ -112,18 +112,11 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 intent.putExtra(Intent.EXTRA_SUBJECT, "Project Zelda Poops");
 
                 String body = "Last deposits ...\n";
-                Date pirData;
-                SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss");
-                for (int i = 0; i < MAXDEPTH; i++) {
-                    String pirDuration = mPirValues.get(i).substring(14, 18);
-                    if (!pirDuration.equals("0000")) {
-                        try {
-                            pirData = DATE_FORMAT.parse(mPirValues.get(i).substring(0, 14));
-                        } catch (Exception e) {
-                            Log.d(TAG, "Date conversion failed");
-                            return;
-                        }
-                        body = body + "\n" + sdf.format(pirData) + " - " + Integer.parseInt(pirDuration) + " secs";
+                for (int i = 0; i < mPirList.size(); i++) {
+                    if (!mPirList.get(i).equals("...")) {
+                        String dayTimeOff = mPirList.get(i).substring(0, 19);
+                        Integer duration = Integer.parseInt(mPirList.get(i).substring(20, 24));
+                        body = body + "\n" + dayTimeOff + " " + duration + " secs";
                     }
                 }
                 intent.putExtra(Intent.EXTRA_TEXT, body + "\n");
@@ -344,7 +337,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             if (item.equals("...")) {
                 iv.setImageResource(R.mipmap.ic_blank);
             } else {
-                Log.d(TAG, "Item is: " + item.substring(20,24));
+//                Log.d(TAG, "Item is: " + item.substring(20,24));
                 Integer threshold = Integer.parseInt(mPreferences.getString("useTime", "0060"));
                 Integer duration = Integer.parseInt(item.substring(20, 24));
                 tv.setText(item.substring(0, 20) + duration + " secs");
@@ -379,9 +372,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         int i;
         mNow = new Date();
         Date pirDate;
-//        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss");
 
-//        Collections.sort(mPirValues, Collections.reverseOrder());
         for (i = 0; i < MAXDEPTH; i++) {
             String pirDuration = mPirValues.get(i).substring(14, 18);
             if (!pirDuration.equals("0000")) {
@@ -393,8 +384,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 }
                 int delta = (int) Math.abs((mNow.getTime() - pirDate.getTime()) / 1000 / 60);
                 if (delta > IGNORE) {
-//                    String contentString = mPirValues.get(i).substring(0, 14);
-                    String day_time_of = mPirValues.get(i).substring(0, 14); // contentString.substring(0, 19);
+                    String day_time_of = mPirValues.get(i).substring(0, 14);
                     String whereClause = PirDataContract.DepositEntry.DAY_TIME_OF + " = ?";
                     String[] whereArgs = {day_time_of};
                     Log.d(TAG, "Trying to insert: " + day_time_of);
@@ -414,53 +404,48 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     private void createList() {
         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss");
         boolean empty = true;
-        Date pushDate=null, pirDate;
         Integer pushDurationOf=0;
+        Date pushDate=null, pirDate;
 
         Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, null, null, PirDataContract.DepositEntry.DAY_TIME_OF + " ASC");
         while (cursor.moveToNext()) {
-            Log.d(TAG, "Processing cursor: " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF)));
-            String day_time_of = cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF));
-            Integer duration_of = Integer.parseInt(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DURATION_OF)));
-//            String pushDayTimeOf=null, pushDurationOf=null;
+            Log.d(TAG, "Processing cursor: " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF)) + " " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DURATION_OF)));
+            String dayTimeOf = cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF));
+            Integer durationOf = Integer.parseInt(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DURATION_OF)));
             if (empty) {
-//                pushDayTimeOf = day_time_of;
-                pushDurationOf = duration_of;
+                pushDurationOf = durationOf;
                 try {
-                    pushDate = DATE_FORMAT.parse(day_time_of);
+                    pushDate = DATE_FORMAT.parse(dayTimeOf);
                 } catch (Exception e) {
                     Log.d(TAG, "Date0 conversion failed");
                     return;
                 }
-                Log.d(TAG, "Push this one: " + sdf.format(pushDate));
                 empty = false;
             } else {
                 try {
-                    pirDate = DATE_FORMAT.parse(day_time_of);
+                    pirDate = DATE_FORMAT.parse(dayTimeOf);
                 } catch (Exception e) {
                     Log.d(TAG, "Date1 conversion failed");
                     return;
                 }
                 int delta = (int) Math.abs((pushDate.getTime() - pirDate.getTime()) / 1000);
-                Log.d(TAG, "Delta time is: " + delta);
                 if (delta < GROUP * 60) {
-                    Log.d(TAG, "Group this one: " + sdf.format(pushDate));
-                    pushDurationOf = delta + duration_of;
+                    pushDurationOf = delta + durationOf;
                 } else {
-                    Log.d(TAG, "Add this one: " + sdf.format(pushDate));
                     StringBuilder sb = new StringBuilder();
-                    sb.append(sdf.format(pushDate));
-                    sb.append("\n");
-                    sb.append(String.format("%04d", pushDurationOf));
-                    sb.append(" secs");
+                    sb.append(sdf.format(pushDate)); sb.append("\n");
+                    sb.append(String.format("%04d", pushDurationOf)); sb.append(" secs");
                     mPirList.add(String.valueOf(sb));
                     pushDate = pirDate;
-                    Log.d(TAG, "Push this one: " + sdf.format(pushDate));
+                    pushDurationOf = durationOf;
                 }
             }
         }
         if (!empty) {
-            Log.d(TAG, "Add last one: " + sdf.format(pushDate));
+            StringBuilder sb = new StringBuilder();
+            sb.append(sdf.format(pushDate)); sb.append("\n");
+            sb.append(String.format("%04d", pushDurationOf)); sb.append(" secs");
+            mPirList.add(String.valueOf(sb));
         }
         Collections.sort(mPirList, Collections.reverseOrder());
         extraPirList();
