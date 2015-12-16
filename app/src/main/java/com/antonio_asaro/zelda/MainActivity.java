@@ -149,7 +149,6 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 Boolean testMode = mPreferences.getBoolean("testMode", false);
                 mConnectStatus.setText("Connecting ...");
                 mPirValues.clear();
-                mPirList.clear();
                 if (!testMode) {
                     connectDevice();
                 } else {
@@ -181,7 +180,6 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             }
 
         });
-        extraPirList();
 
         mGraphView = (GraphView) findViewById(R.id.graph);
         mGraphView.setTitle("    Last day's deposits -->");
@@ -229,6 +227,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         } else {
             mGraphView.setVisibility(View.GONE);
             mListView.setVisibility(View.VISIBLE);
+            createList();
         }
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -407,6 +406,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         Integer pushDurationOf=0;
         Date pushDate=null, pirDate;
 
+        mPirList.clear();
         Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, null, null, PirDataContract.DepositEntry.DAY_TIME_OF + " ASC");
         while (cursor.moveToNext()) {
             Log.d(TAG, "Processing cursor: " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF)) + " " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DURATION_OF)));
