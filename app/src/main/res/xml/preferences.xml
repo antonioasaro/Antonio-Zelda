@@ -19,6 +19,13 @@
         android:summary="Time, in seconds, used to determine whether deposit is pee vs. poo"
         android:title="Pee If Less Than">
     </EditTextPreference>
+    <ListPreference
+        android:key="purgeType"
+        android:title="Purge Database"
+        android:defaultValue="NONE"
+        android:summary="Choose how far back to delete entries"
+        android:entries="@array/purge_entries"
+        android:entryValues="@array/purge_values" />
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="viewType"

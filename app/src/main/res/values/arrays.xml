@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="purge_entries">
+        <item>None</item>
+        <item>One day</item>
+        <item>One week</item>
+        <item>All entries</item>
+    </string-array>
+    <string-array name="purge_values">
+        <item>NONE</item>
+        <item>ONE_DAY</item>
+        <item>ONE_WEEK</item>
+        <item>DELETE_ALL</item>
+    </string-array>
+</resources>

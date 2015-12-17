@@ -8,8 +8,8 @@
         android:title="@string/action_settings"
         app:showAsAction="never" />
     <item
-        android:id="@+id/delete_database"
+        android:id="@+id/purge_database"
         android:orderInCategory="101"
-        android:title="Delete Database"
+        android:title="Purge Database"
         app:showAsAction="never" />
 </menu>

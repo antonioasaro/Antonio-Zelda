@@ -311,9 +311,12 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             startActivity(intent);
             return true;
         }
-        if (id == R.id.delete_database) {
-            getContentResolver().delete(PirDataContract.CONTENT_URI, null, null);
-            Toast.makeText(getApplicationContext(), "Deleted Database", Toast.LENGTH_LONG).show();
+        if (id == R.id.purge_database) {
+            String purge = mPreferences.getString("purgeType", "NONE");
+            if (!purge.equals("NONE")) {
+                getContentResolver().delete(PirDataContract.CONTENT_URI, null, null);
+                Toast.makeText(getApplicationContext(), "Purged Database", Toast.LENGTH_LONG).show();
+            }
             return true;
         }
         return super.onOptionsItemSelected(item);
