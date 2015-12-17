@@ -314,7 +314,23 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         if (id == R.id.purge_database) {
             String purge = mPreferences.getString("purgeType", "NONE");
             if (!purge.equals("NONE")) {
-                getContentResolver().delete(PirDataContract.CONTENT_URI, null, null);
+                if (purge.equals("ALL")) {
+                    getContentResolver().delete(PirDataContract.CONTENT_URI, null, null);
+                } else {
+                    int days = 1;
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+                    if (purge.equals("ONE_WEEK")) days = 7;
+                    Date date = new Date(mNow.getTime() - (days * 24 * 60 * 60 * 1000));
+                    String whereClause = PirDataContract.DepositEntry.DAY_TIME_OF + " < ?";
+                    String[] whereArgs = {sdf.format(date)};
+                    Log.d(TAG, "Check matching entries to delete: " + whereArgs[0]);
+                    Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, whereClause, whereArgs, null);
+                    if (cursor.moveToNext()) {
+                        String dayTimeOf = cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF));
+                        Log.d(TAG, "Founding matching entries to delete: " + dayTimeOf);
+                    }
+//                getContentResolver().delete(PirDataContract.CONTENT_URI, null, null);
+                }
                 Toast.makeText(getApplicationContext(), "Purged Database", Toast.LENGTH_LONG).show();
             }
             return true;
