@@ -10,6 +10,6 @@
     <item
         android:id="@+id/purge_database"
         android:orderInCategory="101"
-        android:title="Purge Database"
+        android:title="Purge Old"
         app:showAsAction="never" />
 </menu>

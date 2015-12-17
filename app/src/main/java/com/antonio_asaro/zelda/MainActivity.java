@@ -319,19 +319,14 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
                 } else {
                     int days = 1;
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-                    if (purge.equals("ONE_WEEK")) days = 7;
+                    if (purge.equals("ONE_WEEK")) { days = 7; };
                     Date date = new Date(mNow.getTime() - (days * 24 * 60 * 60 * 1000));
                     String whereClause = PirDataContract.DepositEntry.DAY_TIME_OF + " < ?";
                     String[] whereArgs = {sdf.format(date)};
-                    Log.d(TAG, "Check matching entries to delete: " + whereArgs[0]);
-                    Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, whereClause, whereArgs, null);
-                    if (cursor.moveToNext()) {
-                        String dayTimeOf = cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF));
-                        Log.d(TAG, "Founding matching entries to delete: " + dayTimeOf);
-                    }
-//                getContentResolver().delete(PirDataContract.CONTENT_URI, null, null);
+                    getContentResolver().delete(PirDataContract.CONTENT_URI, whereClause, whereArgs);
                 }
-                Toast.makeText(getApplicationContext(), "Purged Database", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "Purged old database entries", Toast.LENGTH_LONG).show();
+                createList();
             }
             return true;
         }
@@ -370,7 +365,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
     }
 
     private void testPirValues() {
-        mPirValues.add("201512120850230021");
+        mPirValues.add("201512170650230021");
         mPirValues.add("201512121123230100");
         mPirValues.add("201512121124560005");
         mPirValues.add("201512121127430007");
@@ -428,7 +423,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
         mPirList.clear();
         Cursor cursor = getContentResolver().query(PirDataContract.CONTENT_URI, null, null, null, PirDataContract.DepositEntry.DAY_TIME_OF + " ASC");
         while (cursor.moveToNext()) {
-            Log.d(TAG, "Processing cursor: " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF)) + " " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DURATION_OF)));
+//            Log.d(TAG, "Processing cursor: " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF)) + " " + cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DURATION_OF)));
             String dayTimeOf = cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DAY_TIME_OF));
             Integer durationOf = Integer.parseInt(cursor.getString(cursor.getColumnIndex(PirDataContract.DepositEntry.DURATION_OF)));
             if (empty) {
@@ -492,7 +487,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothAdapter.
             if (delta < INTERVALS) {
                 duration = Integer.parseInt(mPirValues.get(i).substring(14, 18));
                 dataPoints[delta] = new DataPoint(delta, duration + dataPoints[delta].getY());
-                Log.d(TAG, "Data point is: " + "(" + delta + " " + ", " + duration + ")");
+//                Log.d(TAG, "Data point is: " + "(" + delta + " " + ", " + duration + ")");
             }
         }
 
