@@ -3,14 +3,14 @@
     package="com.antonio_asaro.zelda" >
 
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
-
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
 
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="Poject Zelda Poops"
+        android:label="Project Zelda Poops"
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
         <activity
